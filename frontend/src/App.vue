@@ -23,4 +23,3 @@ import { useInventoryStore, ORE_TYPES } from './store/inventory.js';
 const inv = useInventoryStore();
 const { inventory } = storeToRefs(inv);
 </script>
-
