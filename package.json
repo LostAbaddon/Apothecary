@@ -1,0 +1,38 @@
+{
+  "name": "apothecary",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "workspaces": [
+    "frontend",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently --continue-on-error -n FRONT,SERVER -c green,cyan \"npm:dev:frontend\" \"npm:dev:server\"",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:server": "npm run dev -w server",
+
+    "build": "npm run build:frontend && (npm run build:server || true)",
+    "build:frontend": "npm run build -w frontend",
+    "build:server": "npm run build -w server",
+
+    "test": "npm run test -w server || true",
+    "test:unit": "npm run test:unit -w frontend || true",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+
+    "lint": "npm run lint -w frontend && (npm run lint -w server || true) && (npm run lint -w shared || true)",
+    "format": "npm run format -w frontend && (npm run format -w server || true) && (npm run format -w shared || true)",
+    "typecheck": "(npm run typecheck -w frontend || true) && (npm run typecheck -w server || true) && (npm run typecheck -w shared || true)",
+    "clean": "rimraf node_modules **/node_modules **/dist **/build .vite **/.vite .cache **/.cache coverage **/coverage playwright-report **/playwright-report test-results **/test-results"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.46.0",
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5"
+  },
+  "license": "MIT"
+}

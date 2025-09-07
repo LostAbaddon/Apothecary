@@ -1,0 +1,66 @@
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.orig
+.idea/
+.vscode/
+
+# ---- Node / Monorepo ----
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+*.tgz
+.eslintcache
+.stylelintcache
+
+# ---- Environment files ----
+# Keep example files, ignore real secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# If this workspace uses npm, ignore other PM lockfiles
+yarn.lock
+pnpm-lock.yaml
+
+# ---- Build outputs ----
+dist/
+**/dist/
+build/
+**/build/
+
+# TypeScript
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Caches
+.cache/
+**/.cache/
+.vite/
+**/.vite/
+.nyc_output/
+coverage/
+**/coverage/
+
+# ---- Playwright / E2E ----
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+playwright/.cache/
+**/playwright/.cache/
+
+# ---- Misc temporary ----
+tmp/
+temp/
+**/tmp/
+**/temp/
