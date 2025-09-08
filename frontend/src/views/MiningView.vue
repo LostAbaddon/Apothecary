@@ -34,8 +34,7 @@
           </div>
         </div>
         <div style="margin-top:10px; display:flex; gap:8px;">
-          <button class="btn" @click="resetRound()">重置本回合</button>
-          <button class="btn" @click="endRound()">结束回合并入仓</button>
+          <button class="btn" v-if="roundOver" @click="finalizeRound()">检查战利品并入库</button>
         </div>
       </div>
     </div>
@@ -86,6 +85,7 @@ const state = reactive({
   roundCollected: { A:0,B:0,C:0,D:0,E:0 },
   settlementOpen: false,
   lastRoundSummary: { A:0,B:0,C:0,D:0,E:0 },
+  roundOver: false,
 });
 
 function idx(x, y){ return y * size + x; }
@@ -121,16 +121,16 @@ function genField(){
 function resetRound(){
   state.chances = CHANCES_PER_ROUND;
   state.roundCollected = { A:0,B:0,C:0,D:0,E:0 };
+  state.roundOver = false;
   genField();
 }
 
-function endRound(){
-  // 记录结算
+function finalizeRound(){
+  // 记录结算并入库
   state.lastRoundSummary = { ...state.roundCollected };
   inv.addRound(state.roundCollected);
-  // 开启结算弹窗并准备下一回合
+  // 开启结算弹窗（下一回合在关闭时开始）
   state.settlementOpen = true;
-  resetRound();
 }
 
 function revealEmpty(x,y){
@@ -151,10 +151,14 @@ function revealEmpty(x,y){
 
 function consumeChance(){
   if(state.chances>0) state.chances--;
-  if(state.chances===0) endRound();
+  if(state.chances===0){
+    state.roundOver = true;
+    showToast('行动次数用尽。请“检查战利品并入库”。', { type: 'info' });
+  }
 }
 
 function onLeft(cell){
+  if(state.roundOver) return;
   if(cell.revealed) return;
   if(cell.hasOre){
     cell.revealed = true;
@@ -164,9 +168,11 @@ function onLeft(cell){
   } else {
     revealEmpty(cell.x, cell.y); // 免费
   }
+  checkRoundOver();
 }
 
 function onRight(cell){
+  if(state.roundOver) return;
   if(cell.revealed) return;
   if(cell.hasOre){
     cell.revealed = true;
@@ -178,6 +184,7 @@ function onRight(cell){
     revealEmpty(cell.x, cell.y);
     consumeChance();
   }
+  checkRoundOver();
 }
 
 const cells = computed(()=> state.grid);
@@ -186,9 +193,11 @@ const roundCollected = computed(()=> state.roundCollected);
 const settlementOpen = computed(()=> state.settlementOpen);
 const lastRoundSummary = computed(()=> state.lastRoundSummary);
 const lastRoundTotal = computed(()=> Object.values(state.lastRoundSummary).reduce((a,b)=> a + (b||0), 0));
+const roundOver = computed(()=> state.roundOver);
 
 function closeSettlement(){
   state.settlementOpen = false;
+  resetRound();
 }
 
 resetRound();
@@ -198,6 +207,15 @@ const currentTip = computed(() => {
   const list = toasts.value;
   return list.length ? list[list.length - 1].message : '';
 });
+
+function checkRoundOver(){
+  if(state.roundOver) return;
+  const anyHiddenOre = state.grid.some(c => c.hasOre && !c.revealed);
+  if(!anyHiddenOre){
+    state.roundOver = true;
+    showToast('矿石已全部找出。请“检查战利品并入库”。', { type: 'success' });
+  }
+}
 </script>
 
 <style scoped>
