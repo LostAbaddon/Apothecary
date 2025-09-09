@@ -14,7 +14,7 @@
           <span class="badge inline-tip" v-if="currentTip">{{ currentTip }}</span>
         </div>
         <div ref="gridWrapRef" class="grid-wrap">
-          <div class="grid" :style="{ gridTemplateColumns: `repeat(${viewCols}, ${cellSize}px)` }" @contextmenu.prevent>
+          <div class="grid" :style="{ gridTemplateColumns: `repeat(${vCols}, ${cellSize}px)` }" @contextmenu.prevent>
             <div
               v-for="cell in visibleCells"
               :key="cell.key"
@@ -25,14 +25,16 @@
               @contextmenu.prevent="onRight(cell)"
               :title="cellTitle(cell)"
             >
-              <span v-if="cell.revealed && !cell.placeholder">
-                <template v-if="cell.hasOre">
-                  {{ cell.collected ? '✓' : cell.broken ? '✕' : '?' }}
-                </template>
-                <template v-else>
-                  {{ cell.adj || '' }}
-                </template>
-              </span>
+            <span v-if="cell.revealed && !cell.placeholder">
+              <template v-if="cell.hasOre">
+                <span v-if="cell.collected" class="mark mark-ok">✓</span>
+                <span v-else-if="cell.broken" class="mark mark-bad">✕</span>
+                <span v-else class="mark mark-unknown">?</span>
+              </template>
+              <template v-else>
+                {{ cell.adj || '' }}
+              </template>
+            </span>
             </div>
           </div>
         </div>
@@ -77,14 +79,22 @@ import { toasts } from '../composables/toast.js';
 const inv = useInventoryStore();
 
 // 可挖掘区域（真实棋盘）与可视棋盘（展示格数）解耦
+// 输入参数：行数 rows、列数 cols、矿数 mines（类似扫雷雷数）
 const props = defineProps({
-  fieldRows: { type: Number, default: 10 },
-  fieldCols: { type: Number, default: 10 },
-  viewRows: { type: Number, default: 10 },
-  viewCols: { type: Number, default: 10 },
+  rows: { type: Number, default: 10 },
+  cols: { type: Number, default: 10 },
+  mines: { type: Number, default: 20 },
+  // 可选：显示窗口大小，默认跟随 rows/cols
+  viewRows: { type: Number, default: null },
+  viewCols: { type: Number, default: null },
 });
 
-const ORE_PROB = 0.18;
+// 统一的行列计算
+const fRows = computed(() => Math.max(1, (props.rows|0)));
+const fCols = computed(() => Math.max(1, (props.cols|0)));
+const vRows = computed(() => (props.viewRows ?? fRows.value) | 0);
+const vCols = computed(() => (props.viewCols ?? fCols.value) | 0);
+
 const CHANCES_PER_ROUND = 15;
 
 const state = reactive({
@@ -113,19 +123,31 @@ function neighbors(x,y, rows, cols){
 
 function genField(){
   const g=[];
-  for(let y=0;y<props.fieldRows;y++){
-    for(let x=0;x<props.fieldCols;x++){
-      const hasOre = Math.random() < ORE_PROB;
-      const oreType = hasOre ? ORE_TYPES[Math.floor(Math.random()*ORE_TYPES.length)] : null;
-      g.push({ id: `${x}-${y}`, x, y, hasOre, oreType, revealed:false, broken:false, collected:false, adj:0 });
+  const rows = fRows.value, cols = fCols.value;
+  // 初始化为空格
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      g.push({ id: `${x}-${y}`, x, y, hasOre:false, oreType:null, revealed:false, broken:false, collected:false, adj:0 });
     }
   }
-  // compute adj
-  for(let y=0;y<props.fieldRows;y++){
-    for(let x=0;x<props.fieldCols;x++){
-      const c = g[idx(x,y, props.fieldCols)];
-      c.adj = neighbors(x,y, props.fieldRows, props.fieldCols)
-        .reduce((n,[nx,ny]) => n + (g[idx(nx,ny, props.fieldCols)].hasOre?1:0), 0);
+  // 随机放置固定数量的矿石
+  const total = rows * cols;
+  const minesCount = Math.max(0, Math.min((props.mines|0), total));
+  const picked = new Set();
+  while(picked.size < minesCount){
+    picked.add(Math.floor(Math.random() * total));
+  }
+  for(const i of picked){
+    const cell = g[i];
+    cell.hasOre = true;
+    cell.oreType = ORE_TYPES[Math.floor(Math.random()*ORE_TYPES.length)];
+  }
+  // 计算邻接矿数
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const c = g[idx(x,y, cols)];
+      c.adj = neighbors(x,y, rows, cols)
+        .reduce((n,[nx,ny]) => n + (g[idx(nx,ny, cols)].hasOre?1:0), 0);
     }
   }
   state.grid = g;
@@ -152,12 +174,12 @@ function revealEmpty(x,y){
   const queue=[[x,y]];
   while(queue.length){
     const [cx,cy]=queue.shift();
-    const c = state.grid[idx(cx,cy, props.fieldCols)];
+    const c = state.grid[idx(cx,cy, fCols.value)];
     if(!c || c.revealed) continue;
     c.revealed = true;
     if(!c.hasOre && c.adj===0){
-      for(const [nx,ny] of neighbors(cx,cy, props.fieldRows, props.fieldCols)){
-        const n = state.grid[idx(nx,ny, props.fieldCols)];
+      for(const [nx,ny] of neighbors(cx,cy, fRows.value, fCols.value)){
+        const n = state.grid[idx(nx,ny, fCols.value)];
         if(n && !n.revealed && !n.hasOre) queue.push([nx,ny]);
       }
     }
@@ -175,7 +197,7 @@ function consumeChance(){
 function onLeft(cell){
   if(cell.placeholder) return;
   if(state.roundOver) return;
-  const c = state.grid[idx(cell.x, cell.y, props.fieldCols)];
+  const c = state.grid[idx(cell.x, cell.y, fCols.value)];
   if(!c || c.revealed) return;
   if(c.hasOre){
     c.revealed = true;
@@ -191,7 +213,7 @@ function onLeft(cell){
 function onRight(cell){
   if(cell.placeholder) return;
   if(state.roundOver) return;
-  const c = state.grid[idx(cell.x, cell.y, props.fieldCols)];
+  const c = state.grid[idx(cell.x, cell.y, fCols.value)];
   if(!c || c.revealed) return;
   if(c.hasOre){
     c.revealed = true;
@@ -236,32 +258,32 @@ function checkRoundOver(){
 }
 
 // 计算可视格子（含占位空格）
-const canPadX = computed(()=> props.viewCols > props.fieldCols);
-const canPadY = computed(()=> props.viewRows > props.fieldRows);
+const canPadX = computed(()=> vCols.value > fCols.value);
+const canPadY = computed(()=> vRows.value > fRows.value);
 // 使用 floor 作为左/上留白，右/下自动多 1（当差值为奇数时），整体视觉更自然
-const padLeft = computed(()=> canPadX.value ? Math.floor((props.viewCols - props.fieldCols)/2) : 0);
-const padTop = computed(()=> canPadY.value ? Math.floor((props.viewRows - props.fieldRows)/2) : 0);
-const maxOffsetX = computed(()=> Math.max(0, props.fieldCols - props.viewCols));
-const maxOffsetY = computed(()=> Math.max(0, props.fieldRows - props.viewRows));
+const padLeft = computed(()=> canPadX.value ? Math.floor((vCols.value - fCols.value)/2) : 0);
+const padTop = computed(()=> canPadY.value ? Math.floor((vRows.value - fRows.value)/2) : 0);
+const maxOffsetX = computed(()=> Math.max(0, fCols.value - vCols.value));
+const maxOffsetY = computed(()=> Math.max(0, fRows.value - vRows.value));
 const canScroll = computed(()=> maxOffsetX.value > 0 || maxOffsetY.value > 0);
 
 function atField(x,y){
-  if(x<0 || y<0 || x>=props.fieldCols || y>=props.fieldRows) return null;
-  return state.grid[idx(x,y, props.fieldCols)] || null;
+  if(x<0 || y<0 || x>=fCols.value || y>=fRows.value) return null;
+  return state.grid[idx(x,y, fCols.value)] || null;
 }
 
 const visibleCells = computed(()=>{
   const items=[];
-  for(let vy=0; vy<props.viewRows; vy++){
-    for(let vx=0; vx<props.viewCols; vx++){
+  for(let vy=0; vy<vRows.value; vy++){
+    for(let vx=0; vx<vCols.value; vx++){
       let fx, fy;
       // 横向：若可视 >= 真实，则居中填充；否则应用偏移
-      if(props.viewCols >= props.fieldCols){
+      if(vCols.value >= fCols.value){
         fx = vx - padLeft.value;
       } else {
         fx = vx + state.offsetX;
       }
-      if(props.viewRows >= props.fieldRows){
+      if(vRows.value >= fRows.value){
         fy = vy - padTop.value;
       } else {
         fy = vy + state.offsetY;
@@ -296,7 +318,7 @@ onBeforeUnmount(()=> window.removeEventListener('keydown', onKey));
 
 function cellTitle(cell){
   if(cell.placeholder) return '';
-  const c = state.grid[idx(cell.x, cell.y, props.fieldCols)];
+  const c = state.grid[idx(cell.x, cell.y, fCols.value)];
   if(!c) return '';
   return (c.revealed && !c.hasOre) ? `周围矿石：${c.adj}` : '';
 }
@@ -323,10 +345,10 @@ function updateCellSize(){
   // 考虑 grid 内边距与网格间距（与全局样式保持一致）
   const GRID_PAD = 12; // padding: 6px * 2
   const GRID_GAP = 4;  // gap: 4px
-  const availWForCells = Math.max(0, width - GRID_PAD - GRID_GAP * Math.max(0, props.viewCols - 1));
-  const availHForCells = Math.max(0, availableV - GRID_PAD - GRID_GAP * Math.max(0, props.viewRows - 1));
-  const byCols = Math.floor(availWForCells / Math.max(1, props.viewCols));
-  const byRows = Math.floor(availHForCells / Math.max(1, props.viewRows));
+  const availWForCells = Math.max(0, width - GRID_PAD - GRID_GAP * Math.max(0, vCols.value - 1));
+  const availHForCells = Math.max(0, availableV - GRID_PAD - GRID_GAP * Math.max(0, vRows.value - 1));
+  const byCols = Math.floor(availWForCells / Math.max(1, vCols.value));
+  const byRows = Math.floor(availHForCells / Math.max(1, vRows.value));
   const size = Math.max(12, Math.min(byCols, byRows));
   cellSize.value = size;
 }
@@ -337,7 +359,7 @@ onMounted(()=>{
 });
 onBeforeUnmount(()=> window.removeEventListener('resize', updateCellSize));
 
-watch(() => [props.viewCols, props.viewRows, canScroll.value], async ()=>{ await nextTick(); updateCellSize(); });
+watch([vCols, vRows, canScroll], async ()=>{ await nextTick(); updateCellSize(); });
 </script>
 
 <style scoped>
@@ -373,4 +395,10 @@ watch(() => [props.viewCols, props.viewRows, canScroll.value], async ()=>{ await
 .cell.placeholder{ background: transparent !important; border-color: transparent !important; color: transparent !important; }
 .cell.placeholder.revealed{ background: transparent !important; border-color: transparent !important; color: transparent !important; }
 .invisible{ visibility: hidden; }
+
+/* 采集/破坏/未知 标记颜色，让状态一眼可辨 */
+.mark{ font-weight: 900; }
+.mark-ok{ color: #36d399; text-shadow: 0 0 6px rgba(54,211,153,0.35); }
+.mark-bad{ color: #ff6b81; text-shadow: 0 0 6px rgba(255,107,129,0.35); }
+.mark-unknown{ color: #ffd34d; text-shadow: 0 0 6px rgba(255,211,77,0.25); }
 </style>
