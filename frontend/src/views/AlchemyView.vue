@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col">
       <div class="panel">
-        <h2>炼药（2048 规则 + 矿石经验）</h2>
+        <h2>祭炼（2048 规则 + 矿石经验）</h2>
         <div style="display:flex; gap:8px; align-items:center; margin:8px 0;">
           <label>配方：</label>
           <select class="select" v-model="recipeId">
@@ -26,7 +26,7 @@
           <button class="btn" @click="move('left')">←</button>
           <button class="btn" @click="move('down')">↓</button>
           <button class="btn" @click="move('right')">→</button>
-          <span class="stat" v-if="won">已满足配方要求，炼成成功！</span>
+          <span class="stat" v-if="won">已满足配方要求，祭炼成功！</span>
           <span class="stat" v-else>用方向键或按钮移动。</span>
         </div>
       </div>
@@ -167,4 +167,3 @@ onBeforeUnmount(()=> window.removeEventListener('keydown', onKey));
 const flat = computed(()=> state.board.flat());
 
 </script>
-

@@ -1,10 +1,10 @@
 <template>
   <div class="container">
-    <nav class="nav">
+    <nav class="nav" :class="{ disabled: inDungeon }">
       <strong>Apothecary</strong>
-      <RouterLink to="/map">地图</RouterLink>
-      <RouterLink to="/alchemy">炼药</RouterLink>
-      <RouterLink to="/inventory">仓库</RouterLink>
+      <RouterLink to="/map" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">福地</RouterLink>
+      <RouterLink to="/alchemy" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">祭炼</RouterLink>
+      <RouterLink to="/inventory" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">仓库</RouterLink>
     </nav>
     <RouterView v-slot="{ Component }">
       <KeepAlive include="MapView">
@@ -16,5 +16,9 @@
 </template>
 
 <script setup>
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterLink, RouterView, useRoute } from 'vue-router';
+import { computed } from 'vue';
+
+const route = useRoute();
+const inDungeon = computed(()=> route.path === '/mining');
 </script>

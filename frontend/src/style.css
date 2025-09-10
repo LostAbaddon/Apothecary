@@ -13,6 +13,7 @@ a{ color: var(--accent); text-decoration: none; }
 .nav{ display:flex; gap:12px; padding: 12px; background: var(--panel); border-radius: 8px; margin-bottom: 16px; align-items:center; }
 .nav a{ padding: 8px 10px; border-radius: 6px; }
 .nav a.router-link-active{ background: #23273d; }
+.nav.disabled a{ opacity:.5; pointer-events:none; cursor: default; }
 .panel{ background: var(--panel); padding: 12px; border-radius: 10px; }
 .row{ display:flex; gap:12px; align-items:stretch; }
 .col{ flex:1; }

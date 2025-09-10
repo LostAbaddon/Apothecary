@@ -2,12 +2,13 @@
   <div class="row">
     <div class="col">
       <div class="panel" ref="panelRef">
-        <h2>地宫探索</h2>
+        <h2>洞天寻踪</h2>
         <p class="stat">规则：
           - 左键点击空地：免费翻开（会连锁展开）。
           - 左键点击矿石：矿石碎裂，消耗一次机会。
-          - 右键点击矿石：成功采集矿石，消耗一次机会。
+          - 右键点击矿石：成功采集矿石（获得 1~{{ props.oreFindMax ?? 100 }} 的随机数量），消耗一次机会。
           - 右键点击空地：消耗一次机会并翻开区域。
+          - 若剩余未翻开的格子全部为矿石（无空格），则自动翻出并入库，不消耗机会，直接结算。
         </p>
         <div class="badges" style="margin:8px 0">
           <span class="badge">剩余机会：{{ chances }}</span>
@@ -73,7 +74,7 @@
       </div>
       <p style="margin:6px 0; color:#9aa0b4;">合计：{{ lastRoundTotal }}</p>
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
-        <button class="btn" @click="closeSettlement()">离开地宫</button>
+        <button class="btn" @click="closeSettlement()">离开洞天</button>
       </div>
     </div>
   </div>
@@ -96,6 +97,8 @@ const props = defineProps({
   // 若指定 viewRows/viewCols，仅控制可视窗口尺寸；地图尺寸改由随机生成
   viewRows: { type: Number, default: null },
   viewCols: { type: Number, default: null },
+  // 单次成功采集的最大数量（最小恒为 1）
+  oreFindMax: { type: Number, default: 100 },
 });
 
 // 统一的行列计算
@@ -170,9 +173,15 @@ function genField(){
   state.grid = g;
 }
 
-function randomInt(min, max){
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function randomInt(min, max, pow=1){
+  let rnd = 1;
+  for (let i = 0; i < pow; i ++) {
+    rnd *= Math.random();
+  }
+  return Math.floor(rnd * (max - min + 1)) + min;
 }
+console.log(randomInt);
+window.testRandomInt = randomInt;
 
 function pickRandomOres(k){
   const pool = [...ALL_ORES];
@@ -263,8 +272,9 @@ function onRight(cell){
     c.revealed = true;
     c.collected = true;
     const name = c.ore?.name ?? '未知';
-    state.roundCollected[name] = (state.roundCollected[name]||0) + 1;
-    showToast(`找到 ${name} 矿石！`, { type: 'success' });
+    const gain = randomInt(1, Math.max(1, props.oreFindMax || 100), 2);
+    state.roundCollected[name] = (state.roundCollected[name]||0) + gain;
+    showToast(`找到 ${name} × ${gain}！`, { type: 'success' });
     consumeChance();
   } else {
     revealEmpty(c.x, c.y);
@@ -301,6 +311,22 @@ function checkRoundOver(){
   if(!anyHiddenOre){
     state.roundOver = true;
     showToast('矿石已全部找出，已自动结算入库。', { type: 'success' });
+    return;
+  }
+  // 新规则：若剩余未翻开的格子全部为矿石，则自动翻出并入库（不消耗机会）
+  const unrevealed = state.grid.filter(c => !c.revealed);
+  if(unrevealed.length > 0 && unrevealed.every(c => c.hasOre)){
+    for(const c of unrevealed){
+      c.revealed = true;
+      if(!c.collected){
+        c.collected = true;
+        const name = c.ore?.name ?? '未知';
+        const gain = randomInt(1, Math.max(1, props.oreFindMax || 100), 2);
+        state.roundCollected[name] = (state.roundCollected[name]||0) + gain;
+      }
+    }
+    state.roundOver = true;
+    showToast('剩余皆为矿石，已自动采集并结算。', { type: 'success' });
   }
 }
 

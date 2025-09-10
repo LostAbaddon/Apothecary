@@ -3,7 +3,7 @@
     <div class="col">
       <div class="panel">
         <h2>
-          地图
+          福地
           <span class="title-day">第 {{ day }} 天</span>
           <span class="title-energy">活力：{{ energy }}</span>
           <span v-if="currentTip" class="title-tip">{{ currentTip }}</span>
@@ -28,8 +28,8 @@
               :title="(isSeen(cell) ? terrainName(cell.terrain) : '未知') + ` (${cell.x},${cell.y})`"
             >
             </div>
-            <!-- 英雄队伍红色标记（绝对定位覆盖在棋盘上，带移动动画） -->
-            <div class="hero-marker" :style="heroStyle" :title="`英雄队伍：(${hero.x},${hero.y})`">
+            <!-- 求道者队伍红色标记（绝对定位覆盖在棋盘上，带移动动画） -->
+            <div class="hero-marker" :style="heroStyle" :title="`求道者队伍：(${hero.x},${hero.y})`">
               <span class="hero-icon">⚔️</span>
             </div>
             <!-- 天数切换黑场覆盖 -->
@@ -40,8 +40,8 @@
     </div>
     <div class="col" :style="stacked ? { flex: '1 1 auto', width: '100%' } : { flex: '0 0 auto', width: infoWidth + 'px' }">
       <div class="panel" ref="infoPanelRef" :style="{ height: infoHeight + 'px', overflow: 'auto' }">
-        <!-- 英雄列表按钮（仅图标，固定在面板右上角） -->
-        <button class="heroes-btn" @click="showHeroes = true" aria-label="查看英雄" title="查看英雄">
+        <!-- 求道者列表按钮（仅图标，固定在面板右上角） -->
+        <button class="heroes-btn" @click="showHeroes = true" aria-label="查看求道者" title="查看求道者">
           <span class="hero-icon">⚔️</span>
         </button>
         <h3>信息</h3>
@@ -50,7 +50,7 @@
           <p class="stat">
             地形：{{ terrainName(hovered.terrain) }}
             <template v-if="hovered.x === hero.x && hovered.y === hero.y">
-              （英雄：{{ heroesCount }}）
+              （求道者：{{ heroesCount }}）
             </template>
           </p>
           <p class="stat">说明：{{ terrainDesc[hovered.terrain] }}</p>
@@ -75,7 +75,7 @@
         <div v-for="(m, i) in hero.members" :key="i" class="hero-item">
           <div class="hero-line">
             <strong class="hero-name">{{ m.name }}</strong>
-            <span class="stat">Lv {{ m.level }}</span>
+            <span class="stat">境界：{{ levelName(m.level) }}</span>
           </div>
           <div class="hero-stats">
             <span class="stat">HP {{ m.hp }}</span>
@@ -83,6 +83,7 @@
             <span class="stat">DEF {{ m.def }}</span>
             <span class="stat">MP {{ m.mp }}</span>
             <span class="stat">法术：{{ m.spell ? m.spell : '无' }}</span>
+            <span class="stat">法器：{{ m.artifact ? m.artifact : '无' }}</span>
           </div>
         </div>
       </div>
@@ -102,8 +103,8 @@ const TERRAINS = [
   { id: 'plain', name: '平原' },
   { id: 'forest', name: '森林' },
   { id: 'mountain', name: '山脉' },
-  { id: 'dungeon', name: '地宫入口' },
-  { id: 'village', name: '村庄' },
+  { id: 'dungeon', name: '洞天入口' },
+  { id: 'village', name: '宗门' },
 ];
 const terrainColors = {
   plain: '#a3d977',
@@ -116,7 +117,7 @@ const terrainDesc = {
   plain: '开阔地带，行动方便。',
   forest: '林木茂密，视野受限。',
   mountain: '地势崎岖，不易通行。',
-  dungeon: '神秘入口，通向地宫深处。',
+  dungeon: '神秘入口，通向洞天深处。',
   village: '补给与情报的聚集地。',
 };
 
@@ -129,6 +130,15 @@ const stacked = ref(false);
 const hero = reactive({ x: 0, y: 0, members: [] });
 const heroesCount = computed(()=> hero.members.length);
 const showHeroes = ref(false);
+// 境界名称映射：从 1 开始
+const REALMS = [
+  '炼气期','筑基期','金丹期','元婴期','化神期','炼虚期','合体期','大乘期','渡劫期',
+  '真仙境','天仙境','金仙境','太乙金仙境','大罗金仙境','道祖境','混元道祖境'
+];
+function levelName(l){
+  const n = (l|0) - 1;
+  return REALMS[n] || `境界${l}`;
+}
 // 内联提示：仅显示最新一条 toast 内容
 const currentTip = computed(() => {
   const list = toasts.value;
@@ -137,13 +147,14 @@ const currentTip = computed(() => {
 
 function createMember(i){
   return {
-    name: `英雄${i+1}`,
+    name: `求道者${i+1}`,
     level: 1,
     hp: 100,
     atk: 10,
     def: 10,
     mp: 100,
     spell: null,
+    artifact: null,
   };
 }
 // 天与活力
@@ -155,6 +166,10 @@ const dayTransitioning = ref(false);
 // 棋盘布局参数（需与 CSS 对齐）：gap=1px，padding=6px（两侧总计 12px）
 const GRID_GAP = 1;
 const GRID_PADDING = 6; // 单侧内边距
+
+// 邪修遭遇：草原基础概率较低，森林较高（后续可接事件系统）
+const ENCOUNTER_RATE_PLAIN = 0.08; // 8%
+const ENCOUNTER_RATE_FOREST = 0.18; // 18%
 
 // 战争迷雾：视野、已探索与当前可见集合
 const visionRadius = ref(2);
@@ -441,6 +456,8 @@ function handleKeydown(e){
   hero.x = tx; hero.y = ty;
   // 更新战争迷雾
   markSeenAround(hero.x, hero.y);
+  // 草原/森林有概率遭遇邪修（隐形）
+  maybeEncounter(tile);
   // 若活力耗尽，则进入下一天
   if(energy.value === 0){
     advanceDay();
@@ -463,6 +480,17 @@ async function advanceDay(){
   dayOverlayVisible.value = false; // 淡出黑场
   await wait(350);
   dayTransitioning.value = false;
+}
+
+function maybeEncounter(tile){
+  if(!tile) return;
+  let p = 0;
+  if(tile.terrain === 'plain') p = ENCOUNTER_RATE_PLAIN;
+  else if(tile.terrain === 'forest') p = ENCOUNTER_RATE_FOREST;
+  if(p > 0 && Math.random() < p){
+    // 暂时用原生警告框，后续接剧情/战斗系统
+    window.alert('遭遇邪修！');
+  }
 }
 
 // 英雄标记的像素定位与尺寸（相对 .grid 容器）
