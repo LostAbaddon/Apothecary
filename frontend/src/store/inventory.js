@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia';
 
-export const ORE_TYPES = ['A', 'B', 'C', 'D', 'E'];
-
 export const useInventoryStore = defineStore('inventory', {
   state: () => ({
-    inventory: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+    // 仓库使用“名称”聚合库存：不同名字不能混合
+    inventory: {},
     // Simple recipe presets
     recipes: [
       { id: 'apprentice', name: '学徒配方 (A≥10, B≥20)', reqs: [{ type: 'A', exp: 10 }, { type: 'B', exp: 20 }], pool: ['A', 'B'] },
@@ -18,14 +17,16 @@ export const useInventoryStore = defineStore('inventory', {
     },
   },
   actions: {
-    addOre(type, count = 1) {
-      if (!this.inventory[type]) this.inventory[type] = 0;
-      this.inventory[type] += count;
+    // 以名称入库聚合
+    addOre(name, count = 1) {
+      const key = String(name);
+      if (!this.inventory[key]) this.inventory[key] = 0;
+      this.inventory[key] += count;
     },
     addRound(roundMap) {
-      Object.entries(roundMap).forEach(([t, c]) => this.addOre(t, c));
+      // roundMap: { [name: string]: number }
+      Object.entries(roundMap).forEach(([name, c]) => this.addOre(name, c));
     },
     setRecipe(id) { this.selectedRecipeId = id; },
   }
 });
-

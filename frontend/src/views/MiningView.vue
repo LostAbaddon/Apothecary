@@ -13,6 +13,11 @@
           <span class="badge">剩余机会：{{ chances }}</span>
           <span class="badge inline-tip" v-if="currentTip">{{ currentTip }}</span>
         </div>
+        <div class="badges" style="margin:8px 0">
+          <span class="badge">尺寸：{{ state.map.rows }} × {{ state.map.cols }}</span>
+          <span class="badge">矿数：{{ state.map.mines }}</span>
+          <span class="badge">矿种：{{ oreNames.join('、') }}</span>
+        </div>
         <div ref="gridWrapRef" class="grid-wrap">
           <div class="grid" :style="{ gridTemplateColumns: `repeat(${vCols}, ${cellSize}px)` }" @contextmenu.prevent>
             <div
@@ -21,6 +26,7 @@
               class="cell"
               :class="{ revealed: cell.revealed, placeholder: cell.placeholder }"
               :style="{ width: `${cellSize}px`, height: `${cellSize}px` }"
+              @dblclick.prevent="onDblClick(cell, $event)"
               @click="onLeft(cell)"
               @contextmenu.prevent="onRight(cell)"
               :title="cellTitle(cell)"
@@ -39,7 +45,6 @@
           </div>
         </div>
         <div ref="controlsRef" style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <button class="btn" :class="{ invisible: !roundOver }" :disabled="!roundOver" @click="roundOver && finalizeRound()">检查战利品并入库</button>
           <template v-if="canScroll">
             <span class="stat">移动可视区域：</span>
             <button class="btn" @click="moveView('up')" :disabled="offsetY===0">↑</button>
@@ -58,8 +63,12 @@
       <h3>本回合结算</h3>
       <p class="stat">以下为本回合最终收获，已入仓库。</p>
       <div class="badges" style="margin:8px 0">
-        <span class="badge" v-for="t in ORE_TYPES" :key="t">
-          {{ t }} × {{ lastRoundSummary[t] || 0 }}
+        <span
+          v-for="([name, cnt], i) in Object.entries(lastRoundSummary)"
+          :key="name + '-' + i"
+          class="badge"
+        >
+          {{ name }} × {{ cnt || 0 }}
         </span>
       </div>
       <p style="margin:6px 0; color:#9aa0b4;">合计：{{ lastRoundTotal }}</p>
@@ -72,7 +81,8 @@
 
 <script setup>
 import { reactive, computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
-import { useInventoryStore, ORE_TYPES } from '../store/inventory.js';
+import { useInventoryStore } from '../store/inventory.js';
+import { ALL_ORES, ensureOres } from '../models/ore.js';
 import { showToast } from '../composables/toast.js';
 import { toasts } from '../composables/toast.js';
 
@@ -81,17 +91,14 @@ const inv = useInventoryStore();
 // 可挖掘区域（真实棋盘）与可视棋盘（展示格数）解耦
 // 输入参数：行数 rows、列数 cols、矿数 mines（类似扫雷雷数）
 const props = defineProps({
-  rows: { type: Number, default: 10 },
-  cols: { type: Number, default: 10 },
-  mines: { type: Number, default: 20 },
-  // 可选：显示窗口大小，默认跟随 rows/cols
+  // 若指定 viewRows/viewCols，仅控制可视窗口尺寸；地图尺寸改由随机生成
   viewRows: { type: Number, default: null },
   viewCols: { type: Number, default: null },
 });
 
 // 统一的行列计算
-const fRows = computed(() => Math.max(1, (props.rows|0)));
-const fCols = computed(() => Math.max(1, (props.cols|0)));
+const fRows = computed(() => Math.max(1, (state.map.rows|0)));
+const fCols = computed(() => Math.max(1, (state.map.cols|0)));
 const vRows = computed(() => (props.viewRows ?? fRows.value) | 0);
 const vCols = computed(() => (props.viewCols ?? fCols.value) | 0);
 
@@ -101,14 +108,21 @@ const state = reactive({
   // 真实棋盘
   grid: [],
   chances: CHANCES_PER_ROUND,
-  roundCollected: { A:0,B:0,C:0,D:0,E:0 },
+  // 按“名称”汇总
+  roundCollected: {},
   settlementOpen: false,
-  lastRoundSummary: { A:0,B:0,C:0,D:0,E:0 },
+  lastRoundSummary: {},
   roundOver: false,
   // 可视窗口（当 view 小于 field 时可移动）
   offsetX: 0,
   offsetY: 0,
+  // 当前地图配置（进入页面时随机生成）
+  map: { rows: 10, cols: 10, mines: 20, allowedOres: ALL_ORES },
+  // 抑制合成键触发后的下一次 click/contextmenu
+  suppressNextClick: false,
 });
+
+const oreNames = computed(()=> (state.map.allowedOres || []).map(o => (typeof o === 'string' ? o : o.name)));
 
 function idx(x, y, cols){ return y * cols + x; }
 function neighbors(x,y, rows, cols){
@@ -127,20 +141,21 @@ function genField(){
   // 初始化为空格
   for(let y=0;y<rows;y++){
     for(let x=0;x<cols;x++){
-      g.push({ id: `${x}-${y}`, x, y, hasOre:false, oreType:null, revealed:false, broken:false, collected:false, adj:0 });
+      g.push({ id: `${x}-${y}`, x, y, hasOre:false, ore:null, revealed:false, broken:false, collected:false, adj:0 });
     }
   }
   // 随机放置固定数量的矿石
   const total = rows * cols;
-  const minesCount = Math.max(0, Math.min((props.mines|0), total));
+  const minesCount = Math.max(0, Math.min((state.map.mines|0), total));
   const picked = new Set();
   while(picked.size < minesCount){
     picked.add(Math.floor(Math.random() * total));
   }
+  const ores = ensureOres(state.map.allowedOres);
   for(const i of picked){
     const cell = g[i];
     cell.hasOre = true;
-    cell.oreType = ORE_TYPES[Math.floor(Math.random()*ORE_TYPES.length)];
+    cell.ore = ores[Math.floor(Math.random()*ores.length)];
   }
   // 计算邻接矿数
   for(let y=0;y<rows;y++){
@@ -155,11 +170,40 @@ function genField(){
 
 function resetRound(){
   state.chances = CHANCES_PER_ROUND;
-  state.roundCollected = { A:0,B:0,C:0,D:0,E:0 };
+  state.roundCollected = {};
   state.roundOver = false;
   state.offsetX = 0;
   state.offsetY = 0;
   genField();
+}
+
+function randomInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pickRandomOres(k){
+  const pool = [...ALL_ORES];
+  const res = [];
+  const count = Math.max(1, Math.min(k, pool.length));
+  while(res.length < count){
+    const i = Math.floor(Math.random()*pool.length);
+    res.push(pool.splice(i,1)[0]);
+  }
+  return res;
+}
+
+function randomizeMap(){
+  // 行列在 8~16 内随机；矿密度固定 20%；矿种 2~5（或不超过总数）
+  const rows = randomInt(8, 16);
+  const cols = randomInt(8, 16);
+  const density = 0.20;
+  const mines = Math.max(1, Math.floor(rows * cols * density));
+  const kindMax = Math.min(5, ALL_ORES.length);
+  const kinds = randomInt(2, kindMax);
+  const ores = pickRandomOres(kinds);
+  state.map = { rows, cols, mines, allowedOres: ores };
+  console.log(state.map);
+  resetRound();
 }
 
 function finalizeRound(){
@@ -190,11 +234,12 @@ function consumeChance(){
   if(state.chances>0) state.chances--;
   if(state.chances===0){
     state.roundOver = true;
-    showToast('行动次数用尽。请“检查战利品并入库”。', { type: 'info' });
+    showToast('行动次数用尽，已自动结算入库。', { type: 'info' });
   }
 }
 
 function onLeft(cell){
+  if(state.suppressNextClick){ state.suppressNextClick = false; return; }
   if(cell.placeholder) return;
   if(state.roundOver) return;
   const c = state.grid[idx(cell.x, cell.y, fCols.value)];
@@ -211,6 +256,7 @@ function onLeft(cell){
 }
 
 function onRight(cell){
+  if(state.suppressNextClick){ state.suppressNextClick = false; return; }
   if(cell.placeholder) return;
   if(state.roundOver) return;
   const c = state.grid[idx(cell.x, cell.y, fCols.value)];
@@ -218,8 +264,9 @@ function onRight(cell){
   if(c.hasOre){
     c.revealed = true;
     c.collected = true;
-    state.roundCollected[c.oreType]++;
-    showToast(`找到 ${c.oreType} 矿石！`, { type: 'success' });
+    const name = c.ore?.name ?? '未知';
+    state.roundCollected[name] = (state.roundCollected[name]||0) + 1;
+    showToast(`找到 ${name} 矿石！`, { type: 'success' });
     consumeChance();
   } else {
     revealEmpty(c.x, c.y);
@@ -240,7 +287,10 @@ function closeSettlement(){
   resetRound();
 }
 
-resetRound();
+onMounted(() => {
+  // 进入页面时随机生成地图（包括应用启动后首次打开）
+  randomizeMap();
+});
 
 // 内联提示：仅显示最新一条 toast 内容
 const currentTip = computed(() => {
@@ -253,7 +303,7 @@ function checkRoundOver(){
   const anyHiddenOre = state.grid.some(c => c.hasOre && !c.revealed);
   if(!anyHiddenOre){
     state.roundOver = true;
-    showToast('矿石已全部找出。请“检查战利品并入库”。', { type: 'success' });
+    showToast('矿石已全部找出，已自动结算入库。', { type: 'success' });
   }
 }
 
@@ -360,6 +410,39 @@ onMounted(()=>{
 onBeforeUnmount(()=> window.removeEventListener('resize', updateCellSize));
 
 watch([vCols, vRows, canScroll], async ()=>{ await nextTick(); updateCellSize(); });
+
+// 回合结束后自动入库并展示结算，无需按钮
+watch(() => state.roundOver, (v) => {
+  if(v && !state.settlementOpen){
+    finalizeRound();
+  }
+});
+
+function tryChord(cell){
+  if(state.roundOver) return false;
+  const c = state.grid[idx(cell.x, cell.y, fCols.value)];
+  if(!c || !c.revealed || c.hasOre) return false; // 仅对已翻开的数字格生效
+  const ns = neighbors(c.x, c.y, fRows.value, fCols.value).map(([nx,ny]) => state.grid[idx(nx,ny,fCols.value)]);
+  const knownMines = ns.filter(n => n && n.hasOre && (n.collected || n.broken)).length;
+  if(knownMines < c.adj) return false; // 周围矿石尚未全部探明
+  // 自动翻开所有未翻开的周围格子（仅空格；安全）
+  let any=false;
+  for(const n of ns){
+    if(!n || n.revealed) continue;
+    if(!n.hasOre){
+      any = true;
+      revealEmpty(n.x, n.y);
+    }
+  }
+  if(any){
+    checkRoundOver();
+  }
+  return any;
+}
+
+function onDblClick(cell, ev){
+  tryChord(cell);
+}
 </script>
 
 <style scoped>
