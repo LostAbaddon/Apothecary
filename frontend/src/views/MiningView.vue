@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col">
       <div class="panel" ref="panelRef">
-        <h2>采矿</h2>
+        <h2>地宫探索</h2>
         <p class="stat">规则：
           - 左键点击空地：免费翻开（会连锁展开）。
           - 左键点击矿石：矿石碎裂，消耗一次机会。
@@ -168,15 +168,6 @@ function genField(){
   state.grid = g;
 }
 
-function resetRound(){
-  state.chances = CHANCES_PER_ROUND;
-  state.roundCollected = {};
-  state.roundOver = false;
-  state.offsetX = 0;
-  state.offsetY = 0;
-  genField();
-}
-
 function randomInt(min, max){
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -202,8 +193,13 @@ function randomizeMap(){
   const kinds = randomInt(2, kindMax);
   const ores = pickRandomOres(kinds);
   state.map = { rows, cols, mines, allowedOres: ores };
-  console.log(state.map);
-  resetRound();
+  if (mines < CHANCES_PER_ROUND) state.chances = mines;
+  else state.chances = randomInt(CHANCES_PER_ROUND, mines);
+  state.roundCollected = {};
+  state.roundOver = false;
+  state.offsetX = 0;
+  state.offsetY = 0;
+  genField();
 }
 
 function finalizeRound(){
@@ -276,15 +272,13 @@ function onRight(cell){
 }
 
 const chances = computed(()=> state.chances);
-const roundCollected = computed(()=> state.roundCollected);
 const settlementOpen = computed(()=> state.settlementOpen);
 const lastRoundSummary = computed(()=> state.lastRoundSummary);
 const lastRoundTotal = computed(()=> Object.values(state.lastRoundSummary).reduce((a,b)=> a + (b||0), 0));
-const roundOver = computed(()=> state.roundOver);
 
 function closeSettlement(){
   state.settlementOpen = false;
-  resetRound();
+  randomizeMap();
 }
 
 onMounted(() => {
@@ -394,7 +388,7 @@ function updateCellSize(){
   const width = wrap.clientWidth;
   // 考虑 grid 内边距与网格间距（与全局样式保持一致）
   const GRID_PAD = 12; // padding: 6px * 2
-  const GRID_GAP = 4;  // gap: 4px
+  const GRID_GAP = 1;  // gap: 1px
   const availWForCells = Math.max(0, width - GRID_PAD - GRID_GAP * Math.max(0, vCols.value - 1));
   const availHForCells = Math.max(0, availableV - GRID_PAD - GRID_GAP * Math.max(0, vRows.value - 1));
   const byCols = Math.floor(availWForCells / Math.max(1, vCols.value));
