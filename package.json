@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "dev": "concurrently --continue-on-error -n FRONT,SERVER -c green,cyan \"npm:dev:frontend\" \"npm:dev:server\"",
-    "dev:frontend": "npm run dev -w frontend",
+    "dev:frontend": "npm run dev -w frontend -- --port 8123",
     "dev:server": "npm run dev -w server",
 
     "build": "npm run build:frontend && (npm run build:server || true)",
