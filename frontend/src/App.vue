@@ -6,7 +6,11 @@
       <RouterLink to="/alchemy">炼药</RouterLink>
       <RouterLink to="/inventory">仓库</RouterLink>
     </nav>
-    <RouterView />
+    <RouterView v-slot="{ Component }">
+      <KeepAlive include="MapView">
+        <component :is="Component" />
+      </KeepAlive>
+    </RouterView>
   </div>
   
 </template>

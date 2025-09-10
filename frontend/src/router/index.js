@@ -5,7 +5,7 @@ import InventoryView from '../views/InventoryView.vue';
 import MapView from '../views/MapView.vue';
 
 const routes = [
-  { path: '/', redirect: '/mining' },
+  { path: '/', redirect: '/map' },
   { path: '/mining', component: MiningView },
   { path: '/alchemy', component: AlchemyView },
   { path: '/inventory', component: InventoryView },

@@ -73,7 +73,7 @@
       </div>
       <p style="margin:6px 0; color:#9aa0b4;">合计：{{ lastRoundTotal }}</p>
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
-        <button class="btn" @click="closeSettlement()">继续下一回合</button>
+        <button class="btn" @click="closeSettlement()">离开地宫</button>
       </div>
     </div>
   </div>
@@ -81,12 +81,14 @@
 
 <script setup>
 import { reactive, computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import { useInventoryStore } from '../store/inventory.js';
 import { ALL_ORES, ensureOres } from '../models/ore.js';
 import { showToast } from '../composables/toast.js';
 import { toasts } from '../composables/toast.js';
 
 const inv = useInventoryStore();
+const router = useRouter();
 
 // 可挖掘区域（真实棋盘）与可视棋盘（展示格数）解耦
 // 输入参数：行数 rows、列数 cols、矿数 mines（类似扫雷雷数）
@@ -278,7 +280,8 @@ const lastRoundTotal = computed(()=> Object.values(state.lastRoundSummary).reduc
 
 function closeSettlement(){
   state.settlementOpen = false;
-  randomizeMap();
+  // 离开地宫：返回地图页面，MapView 使用 KeepAlive 保持地图/雾/位置
+  router.push({ path: '/map', query: { from: 'dungeon' }});
 }
 
 onMounted(() => {
