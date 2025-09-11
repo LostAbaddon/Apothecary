@@ -2,8 +2,8 @@
   <div class="row">
     <div class="col">
       <div class="panel">
-        <h2>仓库</h2>
-        <p class="stat">查看当前累积的矿石库存。</p>
+        <h2>行囊</h2>
+        <p class="stat">查看当前行囊中的矿石库存。</p>
         <div class="badges" style="margin:8px 0">
           <span
             class="badge"
@@ -18,8 +18,8 @@
       <div class="panel">
         <h3>说明</h3>
         <ul>
-          <li>在“洞天寻踪”结束结算后，矿石会自动入库。</li>
-          <li>“祭炼”会从配方矿池生成新格子，但不消耗仓库库存。</li>
+          <li>在“洞天寻踪”结束结算后，矿石会自动入行囊。</li>
+          <li>“祭炼”会从配方矿池生成新格子，但不消耗行囊库存。</li>
         </ul>
       </div>
     </div>

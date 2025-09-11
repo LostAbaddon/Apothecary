@@ -62,7 +62,7 @@
   <div v-if="settlementOpen" class="modal-backdrop">
     <div class="modal">
       <h3>本回合结算</h3>
-      <p class="stat">以下为本回合最终收获，已入仓库。</p>
+      <p class="stat">以下为本回合最终收获，已入行囊。</p>
       <div class="badges" style="margin:8px 0">
         <span
           v-for="([name, cnt], i) in Object.entries(lastRoundSummary)"
@@ -243,7 +243,7 @@ function consumeChance(){
   if(state.chances>0) state.chances--;
   if(state.chances===0){
     state.roundOver = true;
-    showToast('行动次数用尽，已自动结算入库。', { type: 'info' });
+    showToast('行动次数用尽，已自动结算入行囊。', { type: 'info' });
   }
 }
 
@@ -313,10 +313,10 @@ function checkRoundOver(){
   const anyHiddenOre = state.grid.some(c => c.hasOre && !c.revealed);
   if(!anyHiddenOre){
     state.roundOver = true;
-    showToast('矿石已全部找出，已自动结算入库。', { type: 'success' });
+    showToast('矿石已全部找出，已自动结算入行囊。', { type: 'success' });
     return;
   }
-  // 新规则：若剩余未翻开的格子全部为矿石，则自动翻出并入库（不消耗机会）
+  // 新规则：若剩余未翻开的格子全部为矿石，则自动翻出并入行囊（不消耗机会）
   const unrevealed = state.grid.filter(c => !c.revealed);
   if(unrevealed.length > 0 && unrevealed.every(c => c.hasOre)){
     for(const c of unrevealed){
@@ -437,7 +437,7 @@ onBeforeUnmount(()=> window.removeEventListener('resize', updateCellSize));
 
 watch([vCols, vRows, canScroll], async ()=>{ await nextTick(); updateCellSize(); });
 
-// 回合结束后自动入库并展示结算，无需按钮
+// 回合结束后自动入行囊并展示结算，无需按钮
 watch(() => state.roundOver, (v) => {
   if(v && !state.settlementOpen){
     finalizeRound();

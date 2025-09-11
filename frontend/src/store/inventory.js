@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 export const useInventoryStore = defineStore('inventory', {
   state: () => ({
-    // 仓库使用“名称”聚合库存：不同名字不能混合
+    // 行囊使用“名称”聚合库存：不同名字不能混合
     inventory: {},
     // Simple recipe presets
     recipes: [
@@ -17,7 +17,7 @@ export const useInventoryStore = defineStore('inventory', {
     },
   },
   actions: {
-    // 以名称入库聚合
+    // 以名称入行囊聚合
     addOre(name, count = 1) {
       const key = String(name);
       if (!this.inventory[key]) this.inventory[key] = 0;

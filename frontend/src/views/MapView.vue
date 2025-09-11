@@ -501,6 +501,7 @@ async function advanceDay(){
   // 新的一天：重置“已进入洞天”的记录，并随机重置洞天入口位置
   visitedDungeons.value = new Set();
   reshuffleDungeons();
+  ensureHeroHasPassableNeighbor();
   dayOverlayVisible.value = false; // 淡出黑场
   await wait(350);
   dayTransitioning.value = false;
@@ -535,6 +536,20 @@ function reshuffleDungeons(){
   for(const i of picked){ cells[i].terrain = 'dungeon'; }
   // 3) 保证村庄到至少一个入口连通（必要时清路）
   ensureVillageToDungeonPath(cells, rows, cols);
+}
+
+// 换天刷新后，确保英雄所在位置周围至少一格可通行（plain/forest/village/dungeon）
+function ensureHeroHasPassableNeighbor(){
+  const rows = preview.rows|0, cols = preview.cols|0;
+  const passable = new Set(['plain','forest','village','dungeon']);
+  const ns = neighbors4(hero.x, hero.y, rows, cols)
+    .map(([x,y]) => ({ x, y, cell: preview.cells[idx(x,y, cols)] }))
+    .filter(n => n.cell);
+  if(ns.some(n => passable.has(n.cell.terrain))) return;
+  if(ns.length === 0) return;
+  // 若四邻皆不可通行（如山脉），随机挑一格开成平原
+  const pick = ns[Math.floor(Math.random() * ns.length)];
+  pick.cell.terrain = 'plain';
 }
 
 function maybeEncounter(tile){

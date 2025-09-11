@@ -48,7 +48,7 @@ npm run clean
 │     ├─ App.vue             # 根组件（含导航、KeepAlive）
 │     ├─ style.css           # 全局样式（导航、网格、按钮等）
 │     ├─ router/
-│     │  └─ index.js         # 路由：/map（福地）、/mining（洞天寻踪）、/alchemy（祭炼）、/inventory（仓库）
+│     │  └─ index.js         # 路由：/map（福地）、/mining（洞天寻踪）、/alchemy（祭炼）、/inventory（行囊）
 │     ├─ store/
 │     │  └─ inventory.js     # Pinia 仓库：矿石入库与配方数据
 │     ├─ composables/
@@ -59,7 +59,7 @@ npm run clean
 │        ├─ MapView.vue      # 福地：活力/天数、战争迷雾、移动/遭遇、队伍弹窗
 │        ├─ MiningView.vue   # 洞天：扫雷式采集、随机掉落、自动结算
 │        ├─ AlchemyView.vue  # 祭炼：2048 式合成与经验规则
-│        └─ InventoryView.vue# 仓库：库存与总量
+│        └─ InventoryView.vue# 行囊：库存与总量
 ├─ package.json              # 工作区/脚本（dev/build 等）
 ├─ README.md                 # 当前文档
 └─ （可选）server/、shared/  # 预留目录（本仓库主要以前端为主）
@@ -73,7 +73,7 @@ npm run clean
   - 队伍：求道者数组（name/level/hp/atk/def/mp/spell/artifact），境界名映射（1..16）
 - `views/MiningView.vue`
   - 交互：左/右键规则、随机采集数量（1..oreFindMax，默认 100）、自动“仅余矿格”结算
-  - 结算：入库并显示弹窗，“离开洞天”返回福地并触发换天；洞天期间顶部导航禁用
+  - 结算：入行囊并显示弹窗，“离开洞天”返回福地；洞天期间顶部导航禁用
 - `views/AlchemyView.vue`
   - 玩法：彩虹循环合成；同矿叠加经验、异矿取高；满足配方即“祭炼成功”
 - `store/inventory.js`
@@ -97,8 +97,8 @@ npm run clean
 # TODO
 
 - 福地探索
-  + 将仓库分解为行囊与宗门仓库两部分，回到宗门则将行囊中的物材合并到宗门仓库
-    * 宗门仓库可以在修行祭炼页面查看
+  + 将行囊分解为行囊与宗门行囊两部分，回到宗门则将行囊中的物材合并到宗门行囊
+    * 宗门行囊可以在修行祭炼页面查看
   + 邪修交战界面
     * 邪修攻击成功则抢夺行囊
     * 攻击邪修成功则有概率获取修炼秘籍、法器、内丹等各种宝物
