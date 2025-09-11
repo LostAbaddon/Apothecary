@@ -29,7 +29,7 @@
             >
             </div>
             <!-- 求道者队伍红色标记（绝对定位覆盖在棋盘上，带移动动画） -->
-            <div class="hero-marker" :style="heroStyle" :title="`求道者队伍：(${hero.x},${hero.y})`">
+            <div v-if="heroReady" class="hero-marker" :style="heroStyle" :title="`求道者队伍：(${hero.x},${hero.y})`">
               <span class="hero-icon">⚔️</span>
             </div>
             <!-- 天数切换黑场覆盖 -->
@@ -295,7 +295,15 @@ async function reroll(){
   ensureVillageToDungeonPath(cells, rows, cols);
   // 英雄初始位置：放在村庄所在格子
   const villageCell = cells.find(c => c.terrain === 'village');
-  if(villageCell){ hero.x = villageCell.x; hero.y = villageCell.y; }
+  if(villageCell){
+    // 初始即定位在宗门处：逻辑与显示坐标一致，不做首入飞行动画
+    hero.x = villageCell.x; hero.y = villageCell.y;
+    heroDisplay.x = hero.x; heroDisplay.y = hero.y;
+    heroReady.value = true; // 首次渲染时才插入标记，避免(0,0)闪烁/过渡
+    // 下一帧开启后续过渡（仅用于后续移动）
+    await nextTick();
+    spawnAnimated.value = true;
+  }
   // 如首次进入地图且尚未初始化队伍，则生成 10 名默认英雄
   if(hero.members.length === 0){
     hero.members = Array.from({length: 10}, (_,i)=> createMember(i));
@@ -472,6 +480,7 @@ function handleKeydown(e){
   }
   energy.value = Math.max(0, energy.value - cost);
   hero.x = tx; hero.y = ty;
+  heroDisplay.x = hero.x; heroDisplay.y = hero.y;
   // 更新战争迷雾
   markSeenAround(hero.x, hero.y);
   // 草原/森林有概率遭遇邪修（隐形）
@@ -572,14 +581,19 @@ function maybeEncounter(tile){
 }
 
 // 英雄标记的像素定位与尺寸（相对 .grid 容器）
+const spawnAnimated = ref(false);
+const heroReady = ref(false);
+const heroDisplay = reactive({ x: 0, y: 0 });
 const heroStyle = computed(()=>{
   const size = Math.max(10, cellSize.value - 8);
-  const offsetX = GRID_PADDING + hero.x * (cellSize.value + GRID_GAP) + (cellSize.value - size)/2;
-  const offsetY = GRID_PADDING + hero.y * (cellSize.value + GRID_GAP) + (cellSize.value - size)/2;
+  const offsetX = GRID_PADDING + heroDisplay.x * (cellSize.value + GRID_GAP) + (cellSize.value - size)/2;
+  const offsetY = GRID_PADDING + heroDisplay.y * (cellSize.value + GRID_GAP) + (cellSize.value - size)/2;
+  const dur = spawnAnimated.value ? 160 : 0; // 初始化无动画，后续移动 160ms 过渡
   return {
     width: size + 'px',
     height: size + 'px',
-    transform: `translate(${offsetX}px, ${offsetY}px)`
+    transform: `translate(${offsetX}px, ${offsetY}px)`,
+    transition: dur ? `transform ${dur}ms ease` : 'none'
   };
 });
 </script>
@@ -594,7 +608,7 @@ const heroStyle = computed(()=>{
 /* 使棋盘成为定位容器 */
 .grid{ position: relative; }
 /* 英雄队伍红色标记样式（绝对定位 + 动画） */
-.hero-marker{ position:absolute; top:0; left:0; background:#ef4444; border:2px solid #ffffff; border-radius:999px; box-shadow:0 1px 3px rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; pointer-events:none; transition: transform 160ms ease; will-change: transform; z-index: 2; }
+.hero-marker{ position:absolute; top:0; left:0; background:#ef4444; border:2px solid #ffffff; border-radius:999px; box-shadow:0 1px 3px rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; pointer-events:none; will-change: transform; z-index: 2; }
 .hero-icon{ font-size:.8em; line-height:1; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,.6); }
 /* 换天黑场覆盖 */
 .day-overlay{ position:absolute; inset:6px; background:#000; opacity:0; pointer-events:none; transition: opacity 350ms ease; z-index: 5; border-radius:10px; }

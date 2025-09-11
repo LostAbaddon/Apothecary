@@ -1,18 +1,9 @@
 <template>
-  <div class="row">
+  <div class="row alchemy-row" :class="{ stacked }">
     <div class="col">
       <div class="panel">
-        <h2>祭炼（2048 规则 + 矿石经验）</h2>
-        <div style="display:flex; gap:8px; align-items:center; margin:8px 0;">
-          <label>配方：</label>
-          <select class="select" v-model="recipeId">
-            <option v-for="r in recipes" :key="r.id" :value="r.id">{{ r.name }}</option>
-          </select>
-          <button class="btn" @click="resetBoard">重开</button>
-          <div class="badges">
-            <span class="badge" v-for="r in recipe.reqs" :key="r.type">{{ r.type }} ≥ {{ r.exp }}</span>
-          </div>
-        </div>
+        <h2>祭炼</h2>
+        
         <!-- 棋盘：背景网格 + 绝对定位层（动画） -->
         <div class="board alchemy-board" ref="boardRef" :style="{ gridTemplateColumns: `repeat(${boardSize}, ${TILE_SIZE}px)` }">
           <!-- 背景网格（占位） -->
@@ -26,8 +17,8 @@
               :class="`c-${p.tile.color}`"
               :style="pieceStyle(p)"
             >
-              {{ COLOR_NAMES[p.tile.color] }}
-              <small>{{ p.tile.ore }}·XP{{ p.tile.exp }}</small>
+              {{ oreDisplayName(p.tile.ore) }}
+              <small>{{ Number(p.tile.exp) || 1 }}</small>
             </div>
           </div>
         </div>
@@ -42,13 +33,22 @@
       </div>
     </div>
     <div class="col" :style="stacked ? { flex: '1 1 auto', width: '100%' } : { flex: '0 0 auto', width: infoWidth + 'px' }">
-      <div class="panel" ref="infoPanelRef">
+      <div class="panel" ref="infoPanelRef" :style="{ height: stacked ? 'auto' : (infoHeight + 'px'), overflow: 'auto' }">
         <h3>材料损耗</h3>
-        <ul>
-          <li>同矿合并：无损耗，经验相加（XP 相加）。</li>
-          <li>异矿合并：保留经验更高的一块，另一块视为损耗（XP 取较高者）。</li>
-          <li>彩虹色升级：仅影响颜色进阶，不改变损耗规则。</li>
-        </ul>
+        <div style="margin-top:8px;">
+          <div class="badges" style="margin:6px 0;">
+            <span class="badge" v-for="([name, cnt], i) in consumedEntries" :key="'consumed-'+i">{{ name }} × {{ cnt }}</span>
+            <span v-if="!consumedEntries.length" class="stat">尚无材料损耗</span>
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <h4 style="margin:6px 0 4px;">合并规则</h4>
+          <ul>
+            <li>同色相邻在移动方向上相遇时合并为下一色（紫→赤循环）。</li>
+            <li>同矿合并：经验相加；异矿合并：保留经验更高者。</li>
+            <li>每个格子在一次移动中至多参与一次合并。</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -57,6 +57,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, reactive, computed, ref, nextTick } from 'vue';
 import { useInventoryStore } from '../store/inventory.js';
+import { ALL_ORES } from '../models/ore.js';
 
 const COLOR_NAMES = ['赤','橙','黄','绿','青','蓝','紫'];
 // 暂以常数控制棋盘尺寸；后续可改为外部传入
@@ -74,21 +75,40 @@ const recipeId = computed({
   set:(v)=> inv.setRecipe(v)
 });
 const recipe = computed(()=> inv.selectedRecipe);
+// 矿石显示名映射：将内部编号映射为中文名
+const ORE_NAME_MAP = Object.fromEntries(ALL_ORES.map(o => [o.id, o.name]));
+function oreDisplayName(id){ return ORE_NAME_MAP[id] || String(id); }
+
+// 材料损耗统计：仅统计“同色不同矿”合并中被吞没的矿石（前方 a 被后方 b 覆盖）
+const knownOreIds = new Set(Object.keys(ORE_NAME_MAP));
+const consumedCounts = reactive({});
+function resetConsumedCounts(){ for (const k of Object.keys(consumedCounts)) delete consumedCounts[k]; }
+const consumedEntries = computed(()=> Object.entries(consumedCounts)
+  .filter(([,cnt]) => (cnt|0) > 0)
+  .map(([id, cnt]) => [oreDisplayName(id), cnt])
+);
 
 // 右侧信息面板布局与 Map 信息面板一致的宽度/布局策略
 const infoPanelRef = ref(null);
 const infoWidth = ref(280);
+const infoHeight = ref(240);
 const stacked = ref(false);
 function computeLayout(){
   const vw = Math.max(320, window.innerWidth || 0);
   const quarter = vw * 0.25;
   infoWidth.value = Math.min(500, quarter);
   stacked.value = vw < 900;
+  // 计算右侧面板可用高度，使其在非堆叠布局时可滚动
+  if(!stacked.value && infoPanelRef.value){
+    const rect = infoPanelRef.value.getBoundingClientRect();
+    const padding = 16; // 底部留白
+    infoHeight.value = Math.max(160, Math.floor(window.innerHeight - rect.top - padding));
+  }
 }
 
 function newTile(ore, color){
   const c = Number.isInteger(color) ? color : Math.floor(Math.random() * 7); // 默认随机颜色
-  return { color: c, ore, exp: 1, id: Math.random().toString(36).slice(2) };
+  return { color: c, ore, exp: 1, tier: 0, id: Math.random().toString(36).slice(2) };
 }
 
 const state = reactive({ board: Array.from({length: boardSize.value}, ()=> Array(boardSize.value).fill(null)), won:false, animating:false });
@@ -121,6 +141,7 @@ function spawn(count=1){
     const t = newTile(ore, color);
     t.newborn = true; // 生成动画
     state.board[y][x] = t;
+    //（不在此处统计材料；仅统计“被吞没”的消耗，见合并逻辑）
   }
   // 下一帧清除 newborn 标记，使其由 scale(0.6)->scale(1) 动画
   nextTick(()=>{
@@ -149,7 +170,7 @@ function setLine(dir, index, items){
   }
 }
 
-function compressAndMerge(items){
+function compressAndMerge(items, consumedList){
   const filtered = items.filter(Boolean);
   const res=[];
   for(let i=0;i<filtered.length;i++){
@@ -158,9 +179,19 @@ function compressAndMerge(items){
     if(b && a.color === b.color){
       // merge into next color
       const sameOre = a.ore === b.ore;
-      const ore = sameOre ? a.ore : (a.exp >= b.exp ? a.ore : b.ore);
-      const exp = sameOre ? (a.exp + b.exp) : Math.max(a.exp, b.exp);
-      const merged = { color: cycleColor(a.color), ore, exp, id: Math.random().toString(36).slice(2) };
+      const aExp = Number(a.exp) || 0;
+      const bExp = Number(b.exp) || 0;
+      // 矿种选择：同矿保留原矿；异矿由“后方”覆盖“前方”（b 覆盖 a）
+      const ore = sameOre ? a.ore : b.ore;
+      // 经验规则：同矿相加；异矿取“后方”经验（b）
+      const exp = sameOre ? (aExp + bExp) : bExp;
+      // 材料损耗统计：同色不同矿合并时，“前方”矿 a 被吞没
+      if(!sameOre && consumedList){ consumedList.push(a.ore); }
+      const nextColor = cycleColor(a.color);
+      const baseTier = Math.max(Number(a.tier)||0, Number(b.tier)||0);
+      const wrapped = (a.color === 6 && nextColor === 0);
+      const tier = wrapped ? (baseTier + 1) : baseTier;
+      const merged = { color: nextColor, ore, exp, tier, id: Math.random().toString(36).slice(2) };
       merged.pulse = true; // 合并后脉冲动画
       res.push(merged);
       i++; // skip next
@@ -177,6 +208,7 @@ function move(dir){
   // 记录最终行内容与每个 tile 的目标位置
   let moved = false;
   const finals = new Array(boardSize.value);
+  const consumedThisMove = [];
   const moves = []; // { tile, fromX, fromY, toX, toY }
   for(let i=0;i<boardSize.value;i++){
     // 取该行/列的当前数据（不改变 state）
@@ -221,7 +253,7 @@ function move(dir){
       }
     }
     // 计算最终行（合并逻辑）
-    const merged = compressAndMerge(line);
+    const merged = compressAndMerge(line, consumedThisMove);
     finals[i] = merged;
     if(JSON.stringify(line) !== JSON.stringify(merged)) moved = true;
   }
@@ -248,6 +280,8 @@ function move(dir){
       for(const m of moves){ delete m.tile.animX; delete m.tile.animY; }
       // 应用最终合并结果
       for(let i=0;i<boardSize.value;i++) setLine(dir, i, finals[i]);
+      // 统计本次移动的材料消耗（仅统计已知矿种）
+      for(const id of consumedThisMove){ if(knownOreIds.has(id)) consumedCounts[id] = (consumedCounts[id] || 0) + 1; }
       spawn(1);
       checkWin();
       nextTick(()=>{
@@ -265,6 +299,7 @@ function resetBoard(){
   state.board = Array.from({length: boardSize.value}, ()=> Array(boardSize.value).fill(null));
   state.won = false;
   lastSpawnColor.value = null;
+  resetConsumedCounts();
   spawn(2);
 }
 
@@ -286,9 +321,10 @@ function onKey(e){
   if(d){ e.preventDefault(); move(d); }
 }
 
-onMounted(()=>{
+onMounted(async ()=>{
   window.addEventListener('keydown', onKey);
   window.addEventListener('resize', computeLayout);
+  await nextTick();
   computeLayout();
   resetBoard();
 });
@@ -322,3 +358,7 @@ function pieceStyle(p){
 }
 
 </script>
+
+<style scoped>
+.alchemy-row.stacked{ flex-direction: column; }
+</style>
