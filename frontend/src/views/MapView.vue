@@ -98,6 +98,7 @@ import { useRouter } from 'vue-router';
 import { showToast } from '../composables/toast.js';
 import { toasts } from '../composables/toast.js';
 import { ALL_ORES } from '../models/ore.js';
+import { useInventoryStore } from '../store/inventory.js';
 
 const TERRAINS = [
   { id: 'plain', name: '平原' },
@@ -120,6 +121,8 @@ const terrainDesc = {
   dungeon: '神秘入口，通向洞天深处。',
   village: '补给与情报的聚集地。',
 };
+
+const inv = useInventoryStore();
 
 const preview = reactive({ rows: 10, cols: 10, mines: 20, ores: [], cells: [] });
 const cellSize = ref(22);
@@ -486,6 +489,11 @@ function handleKeydown(e){
       visitedDungeons.value.add(id);
       router.push('/mining');
     }
+  }
+  // 抵达宗门：将行囊中的“洞天材料”转移到宗门仓库
+  if(tile.terrain === 'village'){
+    inv.transferBackpackMaterialsToSect();
+    showToast('行囊中的材料已存入宗门仓库。', { type: 'success' });
   }
 }
 

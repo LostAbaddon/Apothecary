@@ -13,15 +13,25 @@
             <span class="badge" v-for="r in recipe.reqs" :key="r.type">{{ r.type }} ≥ {{ r.exp }}</span>
           </div>
         </div>
-        <div class="board">
-          <div v-for="(tile, i) in flat" :key="i" class="tile" :class="tile ? `c-${tile.color}` : ''">
-            <template v-if="tile">
-              {{ COLOR_NAMES[tile.color] }}
-              <small>{{ tile.ore }}·XP{{ tile.exp }}</small>
-            </template>
+        <!-- 棋盘：背景网格 + 绝对定位层（动画） -->
+        <div class="board alchemy-board" ref="boardRef">
+          <!-- 背景网格（占位） -->
+          <div v-for="n in 16" :key="'slot-' + n" class="slot"></div>
+          <!-- 绝对定位的棋子层（带动画） -->
+          <div class="pieces-layer">
+            <div
+              v-for="p in pieces"
+              :key="p.tile.id"
+              class="piece"
+              :class="`c-${p.tile.color}`"
+              :style="pieceStyle(p)"
+            >
+              {{ COLOR_NAMES[p.tile.color] }}
+              <small>{{ p.tile.ore }}·XP{{ p.tile.exp }}</small>
+            </div>
           </div>
         </div>
-        <div class="controls" style="margin-top:8px;">
+        <div class="controls" style="margin-top:15px; align-items:center;">
           <button class="btn" @click="move('up')">↑</button>
           <button class="btn" @click="move('left')">←</button>
           <button class="btn" @click="move('down')">↓</button>
@@ -31,13 +41,13 @@
         </div>
       </div>
     </div>
-    <div class="col">
-      <div class="panel">
-        <h3>规则要点</h3>
+    <div class="col" :style="stacked ? { flex: '1 1 auto', width: '100%' } : { flex: '0 0 auto', width: infoWidth + 'px' }">
+      <div class="panel" ref="infoPanelRef">
+        <h3>材料损耗</h3>
         <ul>
-          <li>同色合并升级为彩虹下一色；紫色合并回到红色。</li>
-          <li>矿石经验：同矿合并经验相加；不同矿保留经验更高的那块。</li>
-          <li>新出现的格子从配方矿池随机选择矿石，初始经验为 1。</li>
+          <li>同矿合并：无损耗，经验相加（XP 相加）。</li>
+          <li>异矿合并：保留经验更高的一块，另一块视为损耗（XP 取较高者）。</li>
+          <li>彩虹色升级：仅影响颜色进阶，不改变损耗规则。</li>
         </ul>
       </div>
     </div>
@@ -45,11 +55,13 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, reactive, computed } from 'vue';
+import { onMounted, onBeforeUnmount, reactive, computed, ref, nextTick } from 'vue';
 import { useInventoryStore } from '../store/inventory.js';
 
 const COLOR_NAMES = ['赤','橙','黄','绿','青','蓝','紫'];
 const SIZE = 4;
+const TILE_SIZE = 80;
+const TILE_GAP = 8;
 
 const inv = useInventoryStore();
 const recipes = computed(()=> inv.recipes);
@@ -59,11 +71,23 @@ const recipeId = computed({
 });
 const recipe = computed(()=> inv.selectedRecipe);
 
+// 右侧信息面板布局与 Map 信息面板一致的宽度/布局策略
+const infoPanelRef = ref(null);
+const infoWidth = ref(280);
+const stacked = ref(false);
+function computeLayout(){
+  const vw = Math.max(320, window.innerWidth || 0);
+  const quarter = vw * 0.25;
+  infoWidth.value = Math.min(500, quarter);
+  stacked.value = vw < 900;
+}
+
 function newTile(ore){
   return { color: 0, ore, exp: 1, id: Math.random().toString(36).slice(2) };
 }
 
 const state = reactive({ board: Array.from({length: SIZE}, ()=> Array(SIZE).fill(null)), won:false });
+const boardRef = ref(null);
 
 function emptyCells(){
   const res=[];
@@ -77,8 +101,17 @@ function spawn(count=1){
     const [x,y] = empties[Math.floor(Math.random()*empties.length)];
     const pool = recipe.value.pool;
     const ore = pool[Math.floor(Math.random()*pool.length)];
-    state.board[y][x] = newTile(ore);
+    const t = newTile(ore);
+    t.newborn = true; // 生成动画
+    state.board[y][x] = t;
   }
+  // 下一帧清除 newborn 标记，使其由 scale(0.6)->scale(1) 动画
+  nextTick(()=>{
+    for(let y=0;y<SIZE;y++) for(let x=0;x<SIZE;x++){
+      const t = state.board[y][x];
+      if(t && t.newborn) t.newborn = false;
+    }
+  });
 }
 
 function cycleColor(c){ return (c+1) % 7; }
@@ -110,7 +143,9 @@ function compressAndMerge(items){
       const sameOre = a.ore === b.ore;
       const ore = sameOre ? a.ore : (a.exp >= b.exp ? a.ore : b.ore);
       const exp = sameOre ? (a.exp + b.exp) : Math.max(a.exp, b.exp);
-      res.push({ color: cycleColor(a.color), ore, exp, id: Math.random().toString(36).slice(2) });
+      const merged = { color: cycleColor(a.color), ore, exp, id: Math.random().toString(36).slice(2) };
+      merged.pulse = true; // 合并后脉冲动画
+      res.push(merged);
       i++; // skip next
     } else {
       res.push(a);
@@ -131,6 +166,13 @@ function move(dir){
   if(moved){
     spawn(1);
     checkWin();
+    // 清理合并脉冲标记，触发 scale 回落动画
+    nextTick(()=>{
+      for(let y=0;y<SIZE;y++) for(let x=0;x<SIZE;x++){
+        const t = state.board[y][x];
+        if(t && t.pulse) t.pulse = false;
+      }
+    });
   }
 }
 
@@ -160,10 +202,32 @@ function onKey(e){
 
 onMounted(()=>{
   window.addEventListener('keydown', onKey);
+  window.addEventListener('resize', computeLayout);
+  computeLayout();
   resetBoard();
 });
-onBeforeUnmount(()=> window.removeEventListener('keydown', onKey));
+onBeforeUnmount(()=> {
+  window.removeEventListener('keydown', onKey);
+  window.removeEventListener('resize', computeLayout);
+});
 
-const flat = computed(()=> state.board.flat());
+// 以 tile-id 渲染绝对定位棋子，附带位置坐标（用于动画）
+const pieces = computed(()=>{
+  const res=[];
+  for(let y=0;y<SIZE;y++) for(let x=0;x<SIZE;x++){
+    const t = state.board[y][x];
+    if(t) res.push({ tile: t, x, y });
+  }
+  return res;
+});
+
+function pieceStyle(p){
+  const x = p.x * (TILE_SIZE + TILE_GAP);
+  const y = p.y * (TILE_SIZE + TILE_GAP);
+  let scale = 1;
+  if(p.tile.newborn) scale = 0.6;
+  else if(p.tile.pulse) scale = 1.15;
+  return { transform: `translate(${x}px, ${y}px) scale(${scale})`, width: TILE_SIZE + 'px', height: TILE_SIZE + 'px' };
+}
 
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <nav class="nav" :class="{ disabled: inDungeon }">
-      <strong>Apothecary</strong>
+      <strong>求道的扭曲长路</strong>
       <RouterLink to="/map" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">福地</RouterLink>
       <RouterLink to="/alchemy" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">祭炼</RouterLink>
       <RouterLink to="/inventory" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">行囊</RouterLink>
