@@ -1,92 +1,95 @@
-# Apothecary: 炼金工房
+# 求道的漫漫长路：洞天福地·修行祭炼
 
-本项目是一款结合了“扫雷”和“2048”玩法的游戏，前端基于 Vue.js，后端基于 Node.js。
+一款将“福地探索 + 洞天寻踪 + 修行祭炼”结合在一起的轻量 Rouge-lite 原型。前端基于 Vue 3 + Vite（Pinia 状态管理），当前仓库仅包含前端应用。
 
-## 游戏玩法
+## 主要玩法
 
-游戏分为两个核心部分：挖矿和炼金。
+- 福地探索：开放世界探索，寻找洞天，遭遇邪修，偶遇魔界降世，升入更高仙界
+- 洞天寻踪：寻觅灵石，收集材料，偶得秘籍，为祭炼做准备
+- 修行祭炼：提升道行境界，祭炼强大法器
+- 邪修与魔：乱我道心者，皆是魔
 
-### 1. 挖矿
+## 操作说明
 
-此阶段玩法类似扫雷，但目标是寻找矿石而非地雷。
+- 福地移动：键盘 ↑ ↓ ← →
+- 洞天寻踪：扫雷式找宝箱
+- 修行祭炼：2048 式修炼与合成
+- 查看队伍：福地信息面板右上角“⚔️”图标。
 
-- 你有**有限次**翻开格子的机会。
-- **左键点击**空格子，会像扫雷一样翻开周围区域。
-- **左键点击**有矿石的格子，矿石会碎裂，并消耗一次机会。
-- **右键点击**有矿石的格子，会成功采集矿石，并消耗一次机会。
-- **右键点击**空格子，同样会消耗一次机会并翻开区域。
+## 开发与运行
 
-当所有机会用完后，本回合结束，所有采集到的矿石（共五种，随机出现）会进入你的仓库。
+先决条件：Node.js 18+，npm 10+
 
-### 2. 炼金
-
-在此阶段，你将使用仓库中的矿石，根据“配方”来合成道具。核心玩法类似 2048，但合并规则基于彩虹色谱。
-
-- **颜色合并**: 两个“赤”合成一个“橙”，两个“橙”合成一个“黄”，以此类推（赤→橙→黄→绿→青→蓝→紫）。最后两个“紫”会合成为一个“赤”，构成一个循环。
-- **矿石合并**: 每个色块都包含一块初始“经验值”为 1 的矿石。
-  - 合并时，如果两块矿石**种类相同**，新矿石的经验值为两者之和。
-  - 如果两块矿石**种类不同**，则保留经验值**最高**的那块矿石。
-- **胜利条件**: 当炼金棋盘中的矿石满足配方要求时，炼金成功。例如，某配方要求 A 矿石经验值不小于 10，B 矿石不小于 20，你需要通过合并操作，使棋盘内至少有一块 A 矿石经验值达到 10，且至少有一块 B 矿石经验值达到 20。
-
-## 项目结构
-
-- `frontend/`: Vue 3 + Vite 前端应用。
-  - `src/game/`: 包含 `minefield/` (扫雷) 和 `alchemy/` (炼金) 的核心游戏逻辑。
-- `server/`: Node.js 后端 (Express/Fastify)。
-  - `src/game/`: 与前端共享的纯函数游戏规则。
-- `shared/`: 前后端共享的代码，如常量、类型、配方等。
-- `tests/`: 单元和集成测试。
-- `e2e/`: Playwright 端到端测试。
-- `docs/`: 游戏规则、配方和设计文档。
-
-## 开发设置
-
-### 先决条件
-
-- Node.js
-- npm (或兼容的包管理器)
-
-### 主要命令
+常用命令：
 
 ```bash
-# 同时运行前端和后端
+# 启动前端（默认端口 8123）
+npm run dev:frontend
+
+# 或同时尝试前端+后端（无后端也可运行，后端脚本失败会被忽略）
 npm run dev
 
-# 单独运行前端开发服务器
-npm run dev -w frontend
+# 构建前端产物
+npm run build:frontend
 
-# 单独运行后端 API (带热更新)
-npm run dev -w server
-
-# 构建前端应用
-npm run build -w frontend
-
-# 构建后端服务
-npm run build -w server
-
-# 运行前端单元测试
-npm run test:unit -w frontend
-
-# 运行后端测试
-npm run test -w server
-
-# 运行端到端测试
-npm run test:e2e
-
-# 对所有包进行代码检查
-npm run lint -ws
-
-# 格式化所有包的代码
-npm run format -ws
+# 清理依赖与构建产物
+npm run clean
 ```
 
-## 贡献指南
+目录结构（当前以前端为主）
 
-- **提交**: 请遵循 [约定式提交 (Conventional Commits)](https.www.conventionalcommits.org/) 规范。
-  - 提交信息前缀应为 `feat:`, `fix:`, `refactor:`, `docs:`, `test:` 等。
-  - 注明影响范围，如 `feat([alchemy]): ...`。
-- **拉取请求 (Pull Requests)**:
-  - 提供清晰的变更描述。
-  - 关联相关 issue (例如 `Closes #123`)。
-  - 对游戏玩法变更附上截图或 GIF。
-  - 确保测试和文档已更新。
+```
+./
+├─ frontend/                 # Vue 3 + Vite 前端应用
+│  ├─ index.html             # 应用入口 HTML
+│  ├─ vite.config.js         # Vite 配置
+│  └─ src/
+│     ├─ main.js             # 入口脚本，创建应用、挂载 Pinia 与路由
+│     ├─ App.vue             # 根组件（含导航、KeepAlive）
+│     ├─ style.css           # 全局样式（导航、网格、按钮等）
+│     ├─ router/
+│     │  └─ index.js         # 路由：/map（福地）、/mining（洞天寻踪）、/alchemy（祭炼）、/inventory（仓库）
+│     ├─ store/
+│     │  └─ inventory.js     # Pinia 仓库：矿石入库与配方数据
+│     ├─ composables/
+│     │  └─ toast.js         # 轻量提示（showToast + toasts 列表）
+│     ├─ models/
+│     │  └─ ore.js           # 矿种模型/工具（ALL_ORES、ensureOres）
+│     └─ views/
+│        ├─ MapView.vue      # 福地：活力/天数、战争迷雾、移动/遭遇、队伍弹窗
+│        ├─ MiningView.vue   # 洞天：扫雷式采集、随机掉落、自动结算
+│        ├─ AlchemyView.vue  # 祭炼：2048 式合成与经验规则
+│        └─ InventoryView.vue# 仓库：库存与总量
+├─ package.json              # 工作区/脚本（dev/build 等）
+├─ README.md                 # 当前文档
+└─ （可选）server/、shared/  # 预留目录（本仓库主要以前端为主）
+```
+
+关键模块（简要说明）
+
+- `views/MapView.vue`
+  - 视图：福地网格、标题“第N天/活力X/提示”、队伍弹窗
+  - 机制：战争迷雾（已探索/当前可见）、活力与换天动画、邪修遭遇、困林入夜、洞天入口 1/16
+  - 队伍：求道者数组（name/level/hp/atk/def/mp/spell/artifact），境界名映射（1..16）
+- `views/MiningView.vue`
+  - 交互：左/右键规则、随机采集数量（1..oreFindMax，默认 100）、自动“仅余矿格”结算
+  - 结算：入库并显示弹窗，“离开洞天”返回福地并触发换天；洞天期间顶部导航禁用
+- `views/AlchemyView.vue`
+  - 玩法：彩虹循环合成；同矿叠加经验、异矿取高；满足配方即“祭炼成功”
+- `store/inventory.js`
+  - `inventory` 聚合入库；`recipes/selectedRecipe` 用于祭炼配方
+- `composables/toast.js`
+  - `showToast(message, {type, duration})` 与 `toasts` 列表（Map/Mining 共用）
+- `models/ore.js`
+  - `ALL_ORES`（矿池）、`ensureOres`（规范化矿种）
+
+## 备注与后续计划
+
+- 邪修事件后续将接入事件/战斗系统（当前以 alert 占位）。
+- 福地事件、天气/时间加成、道路与更多地形将逐步加入。
+- 祭炼配方与矿种将可配置化，本地化文本完善中。
+
+## 贡献与提交
+
+- 建议使用约定式提交（Conventional Commits），并在标题中标注范围，如 `feat(map)`、`feat(mining)`。
+- 对玩法变更请附上简述与必要的截图/录屏。
