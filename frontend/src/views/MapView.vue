@@ -278,8 +278,8 @@ async function reroll(){
   const randIndex = () => Math.floor(Math.random()*total);
   const villageIdx = randIndex();
   cells[villageIdx].terrain = 'village';
-  // 地宫入口数量：按总格数的 1/16 估算（至少 1 个）
-  const dungeonCount = Math.max(1, Math.round((rows * cols) / 16));
+  // 地宫入口数量：按总格数的 1/20 估算（至少 1 个）
+  const dungeonCount = Math.max(1, Math.round((rows * cols) / 20));
   let placed = 0; const used = new Set([villageIdx]);
   while(placed < dungeonCount){
     const di = randIndex();
@@ -322,6 +322,8 @@ function computeLayout(){
 const mapWrapRef = ref(null);
 const infoPanelRef = ref(null);
 const router = useRouter();
+// 当天已进入过的洞天（按格子 id 记录），换天后清空
+const visitedDungeons = ref(new Set());
 
 onMounted(async ()=>{
   await reroll();
@@ -332,7 +334,15 @@ onActivated(async ()=>{
   window.addEventListener('keydown', handleKeydown, { passive: false });
   const q = router.currentRoute.value.query || {};
   if(q.from === 'dungeon'){
-    await advanceDay();
+    const used = Number.parseInt(q.used, 10);
+    if(Number.isFinite(used) && used > 0){
+      // 消耗与洞天中实际使用掉的次数相同的活力
+      energy.value = Math.max(0, (energy.value|0) - used);
+      // 本次不进入下一天
+    } else {
+      // 若洞天中未消耗挖掘次数（或未提供 used），则进入下一天
+      await advanceDay();
+    }
     // 清理 URL 查询参数，避免重复触发
     router.replace({ path: '/map' });
   }
@@ -469,7 +479,13 @@ function handleKeydown(e){
   }
   // 进入地宫：移动到地宫入口则切换到“地宫探索”
   if(tile.terrain === 'dungeon'){
-    router.push('/mining');
+    const id = idx(tx,ty, preview.cols);
+    if(visitedDungeons.value.has(id)){
+      showToast('今日此洞天已探明，暂不可再入。', { type: 'info' });
+    } else {
+      visitedDungeons.value.add(id);
+      router.push('/mining');
+    }
   }
 }
 
@@ -482,9 +498,43 @@ async function advanceDay(){
   await wait(250); // 停顿少许，给到“换天”感觉
   day.value += 1;
   energy.value = maxEnergy; // 恢复活力
+  // 新的一天：重置“已进入洞天”的记录，并随机重置洞天入口位置
+  visitedDungeons.value = new Set();
+  reshuffleDungeons();
   dayOverlayVisible.value = false; // 淡出黑场
   await wait(350);
   dayTransitioning.value = false;
+}
+
+// 每到新的一天，随机化重置所有洞天入口：
+// - 任何非“宗门(village)”的格子都可能成为新的入口
+// - 原洞天入口会变成随机的非“宗门”地形
+function reshuffleDungeons(){
+  const rows = preview.rows|0, cols = preview.cols|0;
+  const cells = preview.cells || [];
+  if(!rows || !cols || !cells.length) return;
+  const total = rows * cols;
+  // 1) 旧入口改为随机非“宗门”地形
+  const NON_VILLAGE = ['plain','forest','mountain'];
+  for(let i=0;i<total;i++){
+    const c = cells[i];
+    if(c.terrain === 'dungeon'){
+      const r = Math.floor(Math.random()*NON_VILLAGE.length);
+      c.terrain = NON_VILLAGE[r];
+    }
+  }
+  // 2) 选出新的入口（不可为宗门）
+  const candidates = [];
+  for(let i=0;i<total;i++) if(cells[i].terrain !== 'village') candidates.push(i);
+  const dungeonCount = Math.max(1, Math.round((rows * cols) / 20));
+  const picked = new Set();
+  while(picked.size < Math.min(dungeonCount, candidates.length)){
+    const idxIn = Math.floor(Math.random()*candidates.length);
+    picked.add(candidates[idxIn]);
+  }
+  for(const i of picked){ cells[i].terrain = 'dungeon'; }
+  // 3) 保证村庄到至少一个入口连通（必要时清路）
+  ensureVillageToDungeonPath(cells, rows, cols);
 }
 
 function maybeEncounter(tile){

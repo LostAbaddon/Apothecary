@@ -113,6 +113,7 @@ const state = reactive({
   // 真实棋盘
   grid: [],
   chances: CHANCES_PER_ROUND,
+  initialChances: CHANCES_PER_ROUND,
   // 按“名称”汇总
   roundCollected: {},
   settlementOpen: false,
@@ -206,6 +207,7 @@ function randomizeMap(){
   state.map = { rows, cols, mines, allowedOres: ores };
   if (mines < CHANCES_PER_ROUND) state.chances = mines;
   else state.chances = randomInt(CHANCES_PER_ROUND, mines);
+  state.initialChances = state.chances;
   state.roundCollected = {};
   state.roundOver = false;
   state.offsetX = 0;
@@ -291,7 +293,8 @@ const lastRoundTotal = computed(()=> Object.values(state.lastRoundSummary).reduc
 function closeSettlement(){
   state.settlementOpen = false;
   // 离开地宫：返回地图页面，MapView 使用 KeepAlive 保持地图/雾/位置
-  router.push({ path: '/map', query: { from: 'dungeon' }});
+  const used = Math.max(0, (state.initialChances|0) - (state.chances|0));
+  router.push({ path: '/map', query: { from: 'dungeon', used: String(used) } });
 }
 
 onMounted(() => {
