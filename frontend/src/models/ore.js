@@ -7,11 +7,11 @@ export class Ore {
 
 // 提供一组默认矿石（兼容现有 ABCDE 文案）
 export const ALL_ORES = [
-  new Ore('A', '水灵石'),
-  new Ore('B', '火灵石'),
-  new Ore('C', '风灵石'),
-  new Ore('D', '土灵石'),
-  new Ore('E', '以太石'),
+  new Ore('A', '雾凝草'),
+  new Ore('B', '铁魄石'),
+  new Ore('C', '精元果'),
+  new Ore('D', '灵脉菇'),
+  new Ore('E', '古蝉壳'),
 ];
 
 export function ensureOres(list) {

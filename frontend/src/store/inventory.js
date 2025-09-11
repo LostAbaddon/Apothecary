@@ -1,12 +1,20 @@
 import { defineStore } from 'pinia';
 import { ALL_ORES, ensureOres } from '../models/ore.js';
 
+export const INITIAL_SECT_INVENTORY = {
+  "A": 100,
+  "B": 100,
+  "C": 100,
+  "D": 100,
+  "E": 100,
+};
+
 export const useInventoryStore = defineStore('inventory', {
   state: () => ({
     // 行囊：使用“名称”聚合库存
     inventory: {},
     // 宗门仓库：集中存放从洞天获得的材料
-    sectInventory: {},
+    sectInventory: { ...INITIAL_SECT_INVENTORY },
     // Simple recipe presets
     recipes: [
       { id: 'apprentice', name: '学徒配方 (A≥10, B≥20)', reqs: [{ type: 'A', exp: 10 }, { type: 'B', exp: 20 }], pool: ['A', 'B'] },
@@ -20,6 +28,12 @@ export const useInventoryStore = defineStore('inventory', {
     },
   },
   actions: {
+    // 根据矿种ID入宗门仓库聚合（宗门仓库对矿石一律用ID作键）
+    addSectOreById(id, count = 1) {
+      const key = String(id);
+      if (!this.sectInventory[key]) this.sectInventory[key] = 0;
+      this.sectInventory[key] += count;
+    },
     // 以名称入行囊聚合
     addOre(name, count = 1) {
       const key = String(name);
@@ -38,12 +52,28 @@ export const useInventoryStore = defineStore('inventory', {
     },
     // 从行囊将“洞天材料”转移至宗门仓库；保留行囊中非洞天物品
     transferBackpackMaterialsToSect() {
-      const oreNames = new Set(ensureOres(ALL_ORES).map(o => o.name));
+      const ores = ensureOres(ALL_ORES);
+      const oreNames = new Set(ores.map(o => o.name));
+      const nameToId = Object.fromEntries(ores.map(o => [o.name, o.id]));
+
+      // 迁移前：将宗门仓库中历史以“名称”为键的矿石条目合并到以“ID”为键的条目中，消除重复
+      for (const [key, val] of Object.entries(this.sectInventory)) {
+        if (oreNames.has(key)) { // 旧的名称键
+          const id = nameToId[key];
+          if (id) {
+            this.addSectOreById(id, val | 0);
+            delete this.sectInventory[key];
+          }
+        }
+      }
+
+      // 转移行囊矿石：名称 -> ID 聚合到宗门仓库
       for (const [name, cnt] of Object.entries(this.inventory)) {
         const n = cnt | 0;
         if (!n) continue;
-        if (oreNames.has(name)) {
-          this.addSectOre(name, n);
+        if (oreNames.has(name)) { // 矿石：用ID聚合
+          const id = nameToId[name];
+          if (id) this.addSectOreById(id, n);
           this.inventory[name] = 0;
         }
       }

@@ -256,7 +256,9 @@ function onLeft(cell){
   if(c.hasOre){
     c.revealed = true;
     c.broken = true; // 矿石碎裂
-    showToast('一枚矿石被破坏', { type: 'warn' });
+    const name = c.ore?.name ?? '未知';
+    const lost = randomInt(1, Math.max(1, props.oreFindMax || 100), 2);
+    showToast(`${lost} 枚${name}被破坏`, { type: 'warn' });
     consumeChance();
   } else {
     revealEmpty(c.x, c.y); // 免费

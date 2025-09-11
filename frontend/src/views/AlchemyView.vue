@@ -27,6 +27,7 @@
           <button class="btn" @click="move('left')">←</button>
           <button class="btn" @click="move('down')">↓</button>
           <button class="btn" @click="move('right')">→</button>
+          <button class="btn" @click="leave" title="放弃离开，返回福地">放弃离开</button>
           <span class="stat" v-if="won">已满足配方要求，祭炼成功！</span>
           <span class="stat" v-else>用方向键或按钮移动。</span>
         </div>
@@ -34,10 +35,24 @@
     </div>
     <div class="col" :style="stacked ? { flex: '1 1 auto', width: '100%' } : { flex: '0 0 auto', width: infoWidth + 'px' }">
       <div class="panel" ref="infoPanelRef" :style="{ height: stacked ? 'auto' : (infoHeight + 'px'), overflow: 'auto' }">
-        <h3>材料损耗</h3>
+        <h3>配方：{{ recipeDisplayName }}</h3>
+        <div style="margin-top:8px;">
+          <div class="recipe-info">
+            <div class="recipe-requirements">
+              <div v-for="req in recipe.reqs" :key="req.type" class="requirement">
+                {{ oreDisplayName(req.type) }} ≥ {{ req.exp }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <h3 style="margin-top:24px;">材料损耗</h3>
         <div style="margin-top:8px;">
           <div class="badges" style="margin:6px 0;">
-            <span class="badge" v-for="([name, cnt], i) in consumedEntries" :key="'consumed-'+i">{{ name }} × {{ cnt }}</span>
+            <span class="badge" v-for="([name, cnt], i) in consumedEntries" :key="'consumed-'+i">
+              {{ name }} × {{ cnt }}
+              <small style="font-size: 0.85em;">({{ getSectInventoryCount(name) }})</small>
+            </span>
             <span v-if="!consumedEntries.length" class="stat">尚无材料损耗</span>
           </div>
         </div>
@@ -56,6 +71,7 @@
 
 <script setup>
 import { onMounted, onBeforeUnmount, reactive, computed, ref, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import { useInventoryStore } from '../store/inventory.js';
 import { ALL_ORES } from '../models/ore.js';
 
@@ -69,12 +85,18 @@ const TILE_GAP = 8;
 const ANIM_MS = 160;
 
 const inv = useInventoryStore();
+const router = useRouter();
 const recipes = computed(()=> inv.recipes);
 const recipeId = computed({
   get:()=> inv.selectedRecipeId,
   set:(v)=> inv.setRecipe(v)
 });
 const recipe = computed(()=> inv.selectedRecipe);
+// 配方显示名称（去掉括号内容）
+const recipeDisplayName = computed(() => {
+  const name = recipe.value?.name || '';
+  return name.replace(/\s*\(.*\)\s*/, '');
+});
 // 矿石显示名映射：将内部编号映射为中文名
 const ORE_NAME_MAP = Object.fromEntries(ALL_ORES.map(o => [o.id, o.name]));
 function oreDisplayName(id){ return ORE_NAME_MAP[id] || String(id); }
@@ -87,6 +109,15 @@ const consumedEntries = computed(()=> Object.entries(consumedCounts)
   .filter(([,cnt]) => (cnt|0) > 0)
   .map(([id, cnt]) => [oreDisplayName(id), cnt])
 );
+
+function getSectInventoryCount(itemName) {
+  // 通过矿石显示名反向查找内部ID
+  const oreId = Object.entries(ORE_NAME_MAP).find(([id, name]) => name === itemName)?.[0];
+  if (oreId) {
+    return inv.sectInventory[oreId] || 0;
+  }
+  return 0;
+}
 
 // 右侧信息面板布局与 Map 信息面板一致的宽度/布局策略
 const infoPanelRef = ref(null);
@@ -275,21 +306,25 @@ function move(dir){
   nextTick(()=>{
     for(const m of moves){ m.tile.animX = m.toX; m.tile.animY = m.toY; }
     // 在动画结束后，提交最终状态
-    setTimeout(()=>{
+    setTimeout(async ()=>{
       // 清除动画标记
       for(const m of moves){ delete m.tile.animX; delete m.tile.animY; }
       // 应用最终合并结果
       for(let i=0;i<boardSize.value;i++) setLine(dir, i, finals[i]);
       // 统计本次移动的材料消耗（仅统计已知矿种）
       for(const id of consumedThisMove){ if(knownOreIds.has(id)) consumedCounts[id] = (consumedCounts[id] || 0) + 1; }
+      // 先生成新格子
       spawn(1);
-      checkWin();
+      // 等待视图更新并完成一次渲染，再进行失败/胜利判定，避免提示先于新格子出现
+      await nextTick();
+      await new Promise(resolve => requestAnimationFrame(() => resolve()));
       nextTick(()=>{
         for(let y=0;y<boardSize.value;y++) for(let x=0;x<boardSize.value;x++){
           const t = state.board[y][x];
           if(t && t.pulse) t.pulse = false;
         }
       });
+      setTimeout(() => checkWin(), ANIM_MS + 20);
       state.animating = false;
     }, ANIM_MS + 20);
   });
@@ -313,12 +348,114 @@ function checkWin(){
     }
     return ok;
   });
+  
+  if (state.won) {
+    endGame(true, '祭炼成功！');
+  } else {
+    // 检查游戏结束条件
+    checkGameOver();
+  }
+}
+
+function checkGameOver() {
+  // 条件1: 检查投入物品总量是否超过宗门仓库库存
+  const totalUsed = calculateTotalUsedItems();
+  for (const [itemId, usedCount] of Object.entries(totalUsed)) {
+    const sectStock = inv.sectInventory[itemId] || 0;
+    if (usedCount >= sectStock) {
+      endGame(false, `${oreDisplayName(itemId)}投入总量超过宗门库存，祭炼失败！`);
+      return;
+    }
+  }
+
+  // 条件2: 检查是否还有可移动的格子（包括合并）
+  const emptySlots = emptyCells();
+  if (emptySlots.length === 0 && !hasPossibleMoves()) {
+    endGame(false, '没有可移动的格子，祭炼失败！');
+    return;
+  }
+}
+
+function hasPossibleMoves() {
+  // 检查四个相邻格子是否有相同颜色的可以合并
+  for (let y = 0; y < boardSize.value; y++) {
+    for (let x = 0; x < boardSize.value; x++) {
+      const tile = state.board[y][x];
+      if (!tile) continue;
+      
+      // 检查四个相邻格子是否有相同颜色的
+      const neighbors = [
+        {x: x-1, y}, {x: x+1, y}, {x, y: y-1}, {x, y: y+1}
+      ];
+      
+      for (const neighbor of neighbors) {
+        if (neighbor.x >= 0 && neighbor.x < boardSize.value && 
+            neighbor.y >= 0 && neighbor.y < boardSize.value) {
+          const neighborTile = state.board[neighbor.y][neighbor.x];
+          if (neighborTile && neighborTile.color === tile.color) {
+            return true; // 有相邻相同颜色的格子可以合并
+          }
+        }
+      }
+    }
+  }
+  return false; // 没有可合并的格子
+}
+
+
+
+function calculateTotalUsedItems() {
+  const totalUsed = {};
+  
+  // 统计棋盘上所有物品
+  for(let y=0;y<boardSize.value;y++) for(let x=0;x<boardSize.value;x++){
+    const t = state.board[y][x];
+    if(t) {
+      totalUsed[t.ore] = (totalUsed[t.ore] || 0) + 1;
+    }
+  }
+  
+  // 加上已消耗的物品
+  for(const [itemId, consumedCount] of Object.entries(consumedCounts)) {
+    totalUsed[itemId] = (totalUsed[itemId] || 0) + consumedCount;
+  }
+  
+  return totalUsed;
+}
+
+function endGame(success, message) {
+  // 无论成功与否，都根据材料损耗扣除宗门仓库物品
+  for (const [itemId, consumedCount] of Object.entries(consumedCounts)) {
+    if (consumedCount > 0) {
+      const currentStock = inv.sectInventory[itemId] || 0;
+      const newStock = Math.max(0, currentStock - consumedCount);
+      inv.sectInventory[itemId] = newStock;
+    }
+  }
+  
+  if (success) {
+    // 祭炼成功：将新物品加入宗门仓库
+    const recipeName = recipeDisplayName.value;
+    inv.addSectOre(recipeName, 1);
+    alert(`恭喜！${message}`);
+  } else {
+    alert(message);
+  }
+  
+  // 返回福地
+  setTimeout(() => {
+    router.push('/map');
+  }, 1500);
 }
 
 function onKey(e){
   const map={ ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right' };
   const d = map[e.key];
   if(d){ e.preventDefault(); move(d); }
+}
+
+function leave(){
+  endGame(false, '放弃离开，祭炼失败！');
 }
 
 onMounted(async ()=>{
