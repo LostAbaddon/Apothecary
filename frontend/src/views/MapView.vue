@@ -93,7 +93,7 @@
 
 <script setup>
 defineOptions({ name: 'MapView' });
-import { reactive, computed, ref, onMounted, onBeforeUnmount, onActivated, nextTick } from 'vue';
+import { reactive, computed, ref, onMounted, onBeforeUnmount, onActivated, onDeactivated, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from '../composables/toast.js';
 import { toasts } from '../composables/toast.js';
@@ -325,16 +325,21 @@ const router = useRouter();
 
 onMounted(async ()=>{
   await reroll();
-  window.addEventListener('keydown', handleKeydown, { passive: false });
 });
 // 从地宫返回后进入下一天：依赖路由查询参数 from=dungeon
 onActivated(async ()=>{
+  // 仅在本视图激活时绑定方向键监听，避免其它页面被影响
+  window.addEventListener('keydown', handleKeydown, { passive: false });
   const q = router.currentRoute.value.query || {};
   if(q.from === 'dungeon'){
     await advanceDay();
     // 清理 URL 查询参数，避免重复触发
     router.replace({ path: '/map' });
   }
+});
+// 离开（仍保持 KeepAlive）时移除监听
+onDeactivated(()=>{
+  window.removeEventListener('keydown', handleKeydown);
 });
 onBeforeUnmount(()=>{
   window.removeEventListener('keydown', handleKeydown);

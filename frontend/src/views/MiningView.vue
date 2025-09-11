@@ -25,7 +25,7 @@
               v-for="cell in visibleCells"
               :key="cell.key"
               class="cell"
-              :class="{ revealed: cell.revealed, placeholder: cell.placeholder }"
+              :class="{ revealed: cell.revealed, placeholder: cell.placeholder, collected: cell.collected, broken: cell.broken }"
               :style="{ width: `${cellSize}px`, height: `${cellSize}px` }"
               @dblclick.prevent="onDblClick(cell, $event)"
               @click="onLeft(cell)"
@@ -507,4 +507,10 @@ function onDblClick(cell, ev){
 .mark-ok{ color: #36d399; text-shadow: 0 0 6px rgba(54,211,153,0.35); }
 .mark-bad{ color: #ff6b81; text-shadow: 0 0 6px rgba(255,107,129,0.35); }
 .mark-unknown{ color: #ffd34d; text-shadow: 0 0 6px rgba(255,211,77,0.25); }
+
+/* 已探明矿格（采集或误点导致显露）背景与未翻开一致 */
+.cell.revealed.collected,
+.cell.revealed.broken{
+  background: #1d2139 !important; /* 与 .cell 默认背景一致 */
+}
 </style>
