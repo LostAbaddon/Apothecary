@@ -101,6 +101,7 @@ import { ALL_ORES } from '../models/ore.js';
 import { useHeroesStore } from '../store/heroes.js';
 import { useInventoryStore } from '../store/inventory.js';
 import { useGameStore } from '../store/game.js';
+import { useHeroesStore } from '../store/heroes.js';
 
 const TERRAINS = [
   { id: 'plain', name: '平原' },
@@ -126,6 +127,7 @@ const terrainDesc = {
 
 const inv = useInventoryStore();
 const game = useGameStore();
+const heroesGuard = useHeroesStore();
 
 const preview = reactive({ rows: 10, cols: 10, mines: 20, ores: [], cells: [] });
 const cellSize = ref(22);
@@ -333,6 +335,11 @@ onMounted(async ()=>{
 onActivated(async ()=>{
   // 仅在本视图激活时绑定方向键监听，避免其它页面被影响
   window.addEventListener('keydown', handleKeydown, { passive: false });
+  // 安全保护：若队伍人数为 0，则返回宗门
+  if((heroesGuard.count|0) === 0){
+    router.replace('/sect');
+    return;
+  }
   const q = router.currentRoute.value.query || {};
   if(q.from === 'dungeon'){
     const used = Number.parseInt(q.used, 10);
