@@ -417,8 +417,6 @@ function hasPossibleMoves() {
   return false; // 没有可合并的格子
 }
 
-
-
 function calculateTotalUsedItems() {
   const totalUsed = {};
   
