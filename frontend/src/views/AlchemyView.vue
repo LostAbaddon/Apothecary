@@ -2,7 +2,7 @@
   <div class="row alchemy-row" :class="{ stacked }">
     <div class="col">
       <div class="panel">
-        <h2>祭炼</h2>
+        <h2>研习</h2>
         
         <!-- 棋盘：背景网格 + 绝对定位层（动画） -->
         <div class="board alchemy-board" ref="boardRef" :style="{ gridTemplateColumns: `repeat(${boardSize}, ${TILE_SIZE}px)` }">
@@ -28,7 +28,7 @@
           <button class="btn" @click="move('down')">↓</button>
           <button class="btn" @click="move('right')">→</button>
           <button class="btn" @click="leave" title="放弃离开，返回福地">放弃离开</button>
-          <span class="stat" v-if="won">已满足配方要求，祭炼成功！</span>
+          <span class="stat" v-if="won">已满足配方要求，研习成功！</span>
           <span class="stat" v-else>用方向键或按钮移动。</span>
         </div>
       </div>
@@ -71,7 +71,7 @@
   <!-- 失败结果弹窗（含各矿石消耗明细） -->
   <div v-if="showFailModal" class="modal-backdrop" @click.self="showFailModal=false">
     <div class="modal">
-      <h3 style="margin:0 0 6px;">祭炼失败</h3>
+      <h3 style="margin:0 0 6px;">研习失败</h3>
       <p class="stat" style="margin:0 0 10px;">{{ failMessage }}</p>
       <h4 style="margin:6px 0;">消耗明细</h4>
       <div class="badges" style="margin:8px 0">
@@ -105,7 +105,7 @@ const inv = useInventoryStore();
 const router = useRouter();
 const recipe = computed(()=> inv.selectedRecipe);
 // 配方显示名称（去掉括号内容）
-const recipeDisplayName = computed(() => {
+  const recipeDisplayName = computed(() => {
   const name = recipe.value?.name || '';
   return name.replace(/\s*\(.*\)\s*/, '');
 });
@@ -365,7 +365,7 @@ function checkWin(){
   });
   
   if (state.won) {
-    endGame(true, '祭炼成功！');
+  endGame(true, '研习成功！');
   } else {
     // 检查游戏结束条件
     checkGameOver();
@@ -378,7 +378,7 @@ function checkGameOver() {
   for (const [itemId, usedCount] of Object.entries(totalUsed)) {
     const sectStock = inv.sectInventory[itemId] || 0;
     if (usedCount >= sectStock) {
-      endGame(false, `${oreDisplayName(itemId)}投入总量超过宗门库存，祭炼失败！`);
+      endGame(false, `${oreDisplayName(itemId)}投入总量超过宗门库存，研习失败！`);
       return;
     }
   }
@@ -386,7 +386,7 @@ function checkGameOver() {
   // 条件2: 检查是否还有可移动的格子（包括合并）
   const emptySlots = emptyCells();
   if (emptySlots.length === 0 && !hasPossibleMoves()) {
-    endGame(false, '没有可移动的格子，祭炼失败！');
+    endGame(false, '没有可移动的格子，研习失败！');
     return;
   }
 }
@@ -447,7 +447,7 @@ function endGame(success, message) {
   }
   
   if (success) {
-    // 祭炼成功：将新物品加入宗门仓库
+  // 研习成功：将新物品加入宗门仓库
     const recipeName = recipeDisplayName.value;
     inv.addSectOre(recipeName, 1);
     alert(`恭喜！${message}`);
@@ -467,7 +467,7 @@ function onKey(e){
 }
 
 function leave(){
-  endGame(false, '放弃离开，祭炼失败！');
+  endGame(false, '放弃离开，研习失败！');
 }
 
 function confirmFail(){
