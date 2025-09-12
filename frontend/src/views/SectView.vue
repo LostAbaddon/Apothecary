@@ -17,7 +17,7 @@
     <!-- 宗门概览 -->
     <div class="sect-overview">
       <div class="overview-card">
-        <div class="overview-icon">💰</div>
+        <div class="overview-icon">🪙</div>
         <div class="overview-content">
           <div class="overview-value">{{ sectWealth }}</div>
           <div class="overview-label">宗门财富</div>
@@ -135,7 +135,7 @@
                 </div>
                 <div class="building-actions">
                   <button v-if="!building.built && !building.constructing" class="btn btn-tiny" @click="startConstruction(building)">
-                    建设 ({{ building.cost }}💰)
+                    建设 ({{ building.cost }}🪙)
                   </button>
                   <template v-else-if="building.built">
                     <button class="btn btn-tiny" @click="enterBuilding(building)">
