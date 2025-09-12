@@ -17,21 +17,29 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useInventoryStore } from '../store/inventory.js';
+import { useScrollsStore } from '../store/scrolls.js';
 import { ALL_ORES } from '../models/ore.js';
 
 const router = useRouter();
 const inv = useInventoryStore();
+const scrolls = useScrollsStore();
 const log = ref([]);
 
 function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pickOreId(){ return (ALL_ORES[randInt(0, ALL_ORES.length - 1)] || {}).id || 'A'; }
 
 function win(){
-  // 胜利奖励：随机一种（配方卷宗/法器秘术/功法/真经/矿石）。目前简化为随机矿石若干。
-  const oreId = pickOreId();
-  const cnt = randInt(5, 20);
-  inv.addSectOreById(oreId, cnt);
-  log.value.push(`战胜邪修，获得矿石 ${oreId} × ${cnt}`);
+  // 胜利奖励：随机一种（矿石或随机卷宗解封）
+  if(Math.random() < 0.5 && scrolls.sealedList.length){
+    const s = scrolls.sealedList[randInt(0, scrolls.sealedList.length - 1)];
+    scrolls.unseal(s.id);
+    log.value.push(`战胜邪修，获得卷宗线索，解封《${s.name}》`);
+  } else {
+    const oreId = pickOreId();
+    const cnt = randInt(5, 20);
+    inv.addSectOreById(oreId, cnt);
+    log.value.push(`战胜邪修，获得矿石 ${oreId} × ${cnt}`);
+  }
 }
 
 function lose(){
@@ -57,4 +65,3 @@ function back(){ router.push('/map'); }
 .log{ background:#23273d; border:1px solid #3a3f62; border-radius:8px; padding:8px; }
 .log-line{ font-size:14px; color:var(--text); padding:2px 0; }
 </style>
-
