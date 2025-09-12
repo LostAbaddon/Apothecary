@@ -7,6 +7,12 @@ import InventoryView from '../views/InventoryView.vue';
 import MapView from '../views/MapView.vue';
 import SectView from '../views/SectView.vue';
 import BattleView from '../views/BattleView.vue';
+import PavilionView from '../views/PavilionView.vue';
+import PillView from '../views/PillView.vue';
+import ForgeView from '../views/ForgeView.vue';
+import PlatformView from '../views/PlatformView.vue';
+import HallView from '../views/HallView.vue';
+import StudyView from '../views/StudyView.vue';
 
 const routes = [
   { path: '/', redirect: '/sect' },
@@ -16,6 +22,12 @@ const routes = [
   { path: '/map', component: MapView },
   { path: '/sect', component: SectView },
   { path: '/battle', component: BattleView },
+  { path: '/pavilion', component: PavilionView },
+  { path: '/pill', component: PillView },
+  { path: '/forge', component: ForgeView },
+  { path: '/platform', component: PlatformView },
+  { path: '/hall', component: HallView },
+  { path: '/study/:id', component: StudyView },
 ];
 
 const router = createRouter({

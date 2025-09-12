@@ -289,9 +289,18 @@ const startConstruction = (building) => {
   console.log('开始建设:', building.name);
 };
 
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const enterBuilding = (building) => {
-  // TODO: 实现进入建筑功能
-  console.log('进入建筑:', building.name);
+  const map = new Map([
+    ['蕴丹堂', '/pill'],
+    ['凝器堂', '/forge'],
+    ['擎天台', '/platform'],
+    ['龙吟阁', '/pavilion'],
+    ['参青殿', '/hall'],
+  ]);
+  const to = map.get(building.name);
+  if(to) router.push(to);
 };
 
 const upgradeBuilding = (building) => {

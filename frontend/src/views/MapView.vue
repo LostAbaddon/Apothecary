@@ -100,6 +100,7 @@ import { toasts } from '../composables/toast.js';
 import { ALL_ORES } from '../models/ore.js';
 import { useHeroesStore } from '../store/heroes.js';
 import { useInventoryStore } from '../store/inventory.js';
+import { useGameStore } from '../store/game.js';
 
 const TERRAINS = [
   { id: 'plain', name: '平原' },
@@ -124,6 +125,7 @@ const terrainDesc = {
 };
 
 const inv = useInventoryStore();
+const game = useGameStore();
 
 const preview = reactive({ rows: 10, cols: 10, mines: 20, ores: [], cells: [] });
 const cellSize = ref(22);
@@ -502,6 +504,7 @@ async function advanceDay(){
   await wait(500);
   await wait(250); // 停顿少许，给到“换天”感觉
   day.value += 1;
+  game.nextDay();
   energy.value = maxEnergy; // 恢复活力
   // 新的一天：重置“已进入洞天”的记录，并随机重置洞天入口位置
   visitedDungeons.value = new Set();
