@@ -6,6 +6,7 @@ import AlchemyView from '../views/AlchemyView.vue';
 import InventoryView from '../views/InventoryView.vue';
 import MapView from '../views/MapView.vue';
 import SectView from '../views/SectView.vue';
+import BattleView from '../views/BattleView.vue';
 
 const routes = [
   { path: '/', redirect: '/sect' },
@@ -14,6 +15,7 @@ const routes = [
   { path: '/inventory', component: InventoryView },
   { path: '/map', component: MapView },
   { path: '/sect', component: SectView },
+  { path: '/battle', component: BattleView },
 ];
 
 const router = createRouter({

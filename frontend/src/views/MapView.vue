@@ -563,8 +563,7 @@ function maybeEncounter(tile){
   if(tile.terrain === 'plain') p = ENCOUNTER_RATE_PLAIN;
   else if(tile.terrain === 'forest') p = ENCOUNTER_RATE_FOREST;
   if(p > 0 && Math.random() < p){
-    // 暂时用原生警告框，后续接剧情/战斗系统
-    window.alert('遭遇邪修！');
+    router.push('/battle');
   }
 }
 
