@@ -72,7 +72,7 @@
         <button class="btn" @click="showHeroes=false">关闭</button>
       </div>
       <div class="hero-list">
-        <div v-for="(m, i) in hero.members" :key="i" class="hero-item">
+        <div v-for="(m, i) in heroes.members" :key="m.id || i" class="hero-item">
           <div class="hero-line">
             <strong class="hero-name">{{ m.name }}</strong>
             <span class="stat">境界：{{ levelName(m.level) }}</span>
@@ -82,8 +82,8 @@
             <span class="stat">ATK {{ m.atk }}</span>
             <span class="stat">DEF {{ m.def }}</span>
             <span class="stat">MP {{ m.mp }}</span>
-            <span class="stat">法术：{{ m.spell ? m.spell : '无' }}</span>
-            <span class="stat">法器：{{ m.artifact ? m.artifact : '无' }}</span>
+            <span class="stat">外功心法：{{ (m.externals && m.externals.length) ? m.externals.join('、') : '无' }}</span>
+            <span class="stat">法器：{{ (m.artifacts && m.artifacts.length) ? m.artifacts.join('、') : '无' }}</span>
           </div>
         </div>
       </div>
@@ -98,6 +98,7 @@ import { useRouter } from 'vue-router';
 import { showToast } from '../composables/toast.js';
 import { toasts } from '../composables/toast.js';
 import { ALL_ORES } from '../models/ore.js';
+import { useHeroesStore } from '../store/heroes.js';
 import { useInventoryStore } from '../store/inventory.js';
 
 const TERRAINS = [
@@ -129,9 +130,10 @@ const cellSize = ref(22);
 const infoWidth = ref(500);
 const infoHeight = ref(0);
 const stacked = ref(false);
-// 英雄队伍：位置 + 成员数组（成员包含：名字、等级、血量、攻击、防御、魔力、法术）
-const hero = reactive({ x: 0, y: 0, members: [] });
-const heroesCount = computed(()=> hero.members.length);
+// 英雄队伍：位置（成员改从全局 heroes store 读取）
+const hero = reactive({ x: 0, y: 0 });
+const heroes = useHeroesStore();
+const heroesCount = computed(()=> heroes.count);
 const showHeroes = ref(false);
 // 境界名称映射：从 1 开始
 const REALMS = [
@@ -148,18 +150,7 @@ const currentTip = computed(() => {
   return list.length ? list[list.length - 1].message : '';
 });
 
-function createMember(i){
-  return {
-    name: `求道者${i+1}`,
-    level: 1,
-    hp: 100,
-    atk: 10,
-    def: 10,
-    mp: 100,
-    spell: null,
-    artifact: null,
-  };
-}
+// 成员由宗门页面招募产生；此处不再内建生成逻辑
 // 天与活力
 const day = ref(1);
 const maxEnergy = 60;
@@ -304,10 +295,7 @@ async function reroll(){
     await nextTick();
     spawnAnimated.value = true;
   }
-  // 如首次进入地图且尚未初始化队伍，则生成 10 名默认英雄
-  if(hero.members.length === 0){
-    hero.members = Array.from({length: 10}, (_,i)=> createMember(i));
-  }
+  // 不再自动生成默认英雄；初始队伍为 0
   // 初始化战争迷雾：以英雄为中心揭示
   seen.value = new Set();
   markSeenAround(hero.x, hero.y);
