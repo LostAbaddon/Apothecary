@@ -67,6 +67,24 @@
       </div>
     </div>
   </div>
+  
+  <!-- 失败结果弹窗（含各矿石消耗明细） -->
+  <div v-if="showFailModal" class="modal-backdrop" @click.self="showFailModal=false">
+    <div class="modal">
+      <h3 style="margin:0 0 6px;">祭炼失败</h3>
+      <p class="stat" style="margin:0 0 10px;">{{ failMessage }}</p>
+      <h4 style="margin:6px 0;">消耗明细</h4>
+      <div class="badges" style="margin:8px 0">
+        <span class="badge" v-for="([name, cnt], i) in consumedEntries" :key="'fail-consumed-'+i">
+          {{ name }} × {{ cnt }}
+        </span>
+        <span v-if="!consumedEntries.length" class="stat">本次未消耗任何矿石</span>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
+        <button class="btn" @click="confirmFail">返回福地</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -75,7 +93,6 @@ import { useRouter } from 'vue-router';
 import { useInventoryStore } from '../store/inventory.js';
 import { ALL_ORES } from '../models/ore.js';
 
-const COLOR_NAMES = ['赤','橙','黄','绿','青','蓝','紫'];
 // 暂以常数控制棋盘尺寸；后续可改为外部传入
 const BOARD_SIZE = 4;
 const COLOR_CHANGE_RATE = 0.95;
@@ -86,11 +103,6 @@ const ANIM_MS = 160;
 
 const inv = useInventoryStore();
 const router = useRouter();
-const recipes = computed(()=> inv.recipes);
-const recipeId = computed({
-  get:()=> inv.selectedRecipeId,
-  set:(v)=> inv.setRecipe(v)
-});
 const recipe = computed(()=> inv.selectedRecipe);
 // 配方显示名称（去掉括号内容）
 const recipeDisplayName = computed(() => {
@@ -124,6 +136,9 @@ const infoPanelRef = ref(null);
 const infoWidth = ref(280);
 const infoHeight = ref(240);
 const stacked = ref(false);
+// 失败结果弹窗
+const showFailModal = ref(false);
+const failMessage = ref('');
 function computeLayout(){
   const vw = Math.max(320, window.innerWidth || 0);
   const quarter = vw * 0.25;
@@ -438,14 +453,13 @@ function endGame(success, message) {
     const recipeName = recipeDisplayName.value;
     inv.addSectOre(recipeName, 1);
     alert(`恭喜！${message}`);
+    // 成功仍维持原先的自动返回
+    setTimeout(() => { router.push('/map'); }, 1500);
   } else {
-    alert(message);
+    // 失败：以弹窗方式展示结果与各矿消耗明细，由玩家确认后返回
+    failMessage.value = message;
+    showFailModal.value = true;
   }
-  
-  // 返回福地
-  setTimeout(() => {
-    router.push('/map');
-  }, 1500);
 }
 
 function onKey(e){
@@ -456,6 +470,11 @@ function onKey(e){
 
 function leave(){
   endGame(false, '放弃离开，祭炼失败！');
+}
+
+function confirmFail(){
+  showFailModal.value = false;
+  router.push('/map');
 }
 
 onMounted(async ()=>{
@@ -498,4 +517,24 @@ function pieceStyle(p){
 
 <style scoped>
 .alchemy-row.stacked{ flex-direction: column; }
+/* 弹窗样式（与其他视图保持一致） */
+.modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 16px;
+  z-index: 50;
+}
+.modal{
+  width: 100%;
+  max-width: 520px;
+  background: var(--panel);
+  border: 1px solid #303657;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
 </style>

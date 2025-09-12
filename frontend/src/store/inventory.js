@@ -17,10 +17,10 @@ export const useInventoryStore = defineStore('inventory', {
     sectInventory: { ...INITIAL_SECT_INVENTORY },
     // Simple recipe presets
     recipes: [
-      { id: 'apprentice', name: '学徒配方 (A≥10, B≥20)', reqs: [{ type: 'A', exp: 10 }, { type: 'B', exp: 20 }], pool: ['A', 'B'] },
-      { id: 'rainbow', name: '彩虹配方 (C≥12, D≥12, E≥12)', reqs: [{ type: 'C', exp: 12 }, { type: 'D', exp: 12 }, { type: 'E', exp: 12 }], pool: ['C', 'D', 'E'] }
+      { id: 'styptic', name: '金创药', reqs: [{ type: 'C', exp: 10 }, { type: 'A', exp: 5 }], pool: ['C', 'A'] },
+      { id: 'rainbow', name: '彩虹配方', reqs: [{ type: 'C', exp: 12 }, { type: 'D', exp: 12 }, { type: 'E', exp: 12 }], pool: ['C', 'D', 'E'] }
     ],
-    selectedRecipeId: 'apprentice',
+    selectedRecipeId: 'styptic',
   }),
   getters: {
     selectedRecipe(state) {
