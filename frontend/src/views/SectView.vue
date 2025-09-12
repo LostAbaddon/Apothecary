@@ -91,13 +91,11 @@
             <p class="section-description">管理宗门弟子的修行与任务分配</p>
             <div class="disciples-grid">
               <div v-for="disciple in disciples" :key="disciple.id" class="disciple-card">
-                <div class="disciple-avatar">{{ disciple.avatar }}</div>
+                <div class="disciple-avatar">{{ disciple.sevenColor != null ? '🜍' : '🧙' }}</div>
                 <div class="disciple-info">
                   <div class="disciple-name">{{ disciple.name }}</div>
-                  <div class="disciple-level">{{ disciple.realm }} {{ disciple.level }}重</div>
-                  <div class="disciple-status" :class="disciple.status">
-                    {{ getStatusText(disciple.status) }}
-                  </div>
+                  <div class="disciple-level">{{ realmName(disciple.level) }} {{ disciple.level }}重</div>
+                  <div class="disciple-status" :class="disciple.status">{{ getStatusText(disciple.status) }}</div>
                 </div>
                 <div class="disciple-actions">
                   <button class="btn btn-tiny" @click="assignTask(disciple)">派遣</button>
@@ -211,7 +209,10 @@ const sectMotto = ref('道法自然，青云直上');
 const sectLevel = ref(1);
 const sectWealth = ref(1000);
 const sectReputation = ref(100);
-const totalDisciples = ref(10);
+// 弟子数量改为从全局队伍（heroes）派生
+import { useHeroesStore } from '../store/heroes.js';
+const heroes = useHeroesStore();
+const totalDisciples = computed(() => heroes.count | 0);
 
 // 任务和事件
 const completedTasks = ref(3);
@@ -244,13 +245,13 @@ const warehouseValue = computed(() => {
   return total;
 });
 
-// 弟子数据
-const disciples = ref([
-  { id: 1, name: '李青云', avatar: '🧙‍♂️', realm: '筑基期', level: 3, status: 'training' },
-  { id: 2, name: '王明月', avatar: '🧙‍♀️', realm: '练气期', level: 9, status: 'available' },
-  { id: 3, name: '张无忌', avatar: '🧙‍♂️', realm: '筑基期', level: 1, status: 'mission' },
-  { id: 4, name: '赵灵儿', avatar: '🧙‍♀️', realm: '练气期', level: 7, status: 'training' },
-]);
+// 弟子数据：直接使用全局 heroes 成员
+const disciples = computed(() => heroes.members);
+const REALMS = [
+  '炼气期','筑基期','金丹期','元婴期','化神期','炼虚期','合体期','大乘期','渡劫期',
+  '真仙境','天仙境','金仙境','太乙金仙境','大罗金仙境','道祖境','混元道祖境'
+];
+function realmName(l){ const n=(l|0)-1; return REALMS[n] || `境界${l}`; }
 
 // 建筑数据
 const buildings = ref([
@@ -270,24 +271,18 @@ const getOreIcon = (name) => {
 
 const getStatusText = (status) => {
   const statusMap = {
-    'training': '修炼中',
-    'available': '待命',
-    'mission': '任务中',
-    'injured': '疗伤中'
+    '寻秘': '寻秘',
+    '驻守': '驻守',
+    '闭关': '闭关',
+    '走火入魔': '走火入魔',
   };
-  return statusMap[status] || '未知';
+  return statusMap[status] || String(status || '未知');
 };
 
 // 事件处理函数
-const recruitDisciple = () => {
-  // TODO: 实现招收弟子功能
-  console.log('招收弟子');
-};
+const recruitDisciple = () => { heroes.recruitOne(); };
 
-const assignTask = (disciple) => {
-  // TODO: 实现派遣任务功能
-  console.log('派遣弟子:', disciple.name);
-};
+const assignTask = (disciple) => { console.log('派遣弟子:', disciple.name); };
 
 const startConstruction = (building) => {
   // TODO: 实现开始建设功能
