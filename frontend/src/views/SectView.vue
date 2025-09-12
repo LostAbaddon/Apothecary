@@ -94,11 +94,23 @@
                 <div class="disciple-avatar">{{ disciple.sevenColor != null ? '🜍' : '🧙' }}</div>
                 <div class="disciple-info">
                   <div class="disciple-name">{{ disciple.name }}</div>
-                  <div class="disciple-level">{{ realmName(disciple.level) }} {{ disciple.level }}重</div>
+                  <div class="disciple-level">{{ levelName(disciple.level) }}</div>
                   <div class="disciple-status" :class="disciple.status">{{ getStatusText(disciple.status) }}</div>
                 </div>
                 <div class="disciple-actions">
-                  <button class="btn btn-tiny" @click="assignTask(disciple)">派遣</button>
+                  <button
+                    v-if="disciple.status === '驻守'"
+                    class="btn btn-tiny"
+                    @click="assignTask(disciple)"
+                  >派遣</button>
+                  <button
+                    v-else-if="disciple.status === '寻秘'"
+                    class="btn btn-tiny"
+                    :disabled="!game.heroAtVillage"
+                    title="只有当求道者队伍在宗门时才能驻守"
+                    @click="assignTask(disciple)"
+                  >驻守</button>
+                  <button v-else class="btn btn-tiny" disabled>{{ getStatusText(disciple.status) }}</button>
                 </div>
               </div>
             </div>
@@ -200,6 +212,7 @@
 import { computed, ref } from 'vue';
 import { useInventoryStore } from '../store/inventory.js';
 import { ALL_ORES } from '../models/ore.js';
+import { levelName } from '../models/realms.js';
 
 const inv = useInventoryStore();
 
@@ -209,10 +222,10 @@ const sectMotto = ref('道法自然，青云直上');
 const sectLevel = ref(1);
 const sectWealth = ref(1000);
 const sectReputation = ref(100);
-// 弟子数量改为从全局队伍（heroes）派生
-import { useHeroesStore } from '../store/heroes.js';
-const heroes = useHeroesStore();
-const totalDisciples = computed(() => heroes.count | 0);
+// 弟子数量改为从独立的弟子仓库派生
+import { useDisciplesStore } from '../store/disciples.js';
+const dStore = useDisciplesStore();
+const totalDisciples = computed(() => dStore.count | 0);
 
 // 任务和事件
 const completedTasks = ref(3);
@@ -245,13 +258,8 @@ const warehouseValue = computed(() => {
   return total;
 });
 
-// 弟子数据：直接使用全局 heroes 成员
-const disciples = computed(() => heroes.members);
-const REALMS = [
-  '炼气期','筑基期','金丹期','元婴期','化神期','炼虚期','合体期','大乘期','渡劫期',
-  '真仙境','天仙境','金仙境','太乙金仙境','大罗金仙境','道祖境','混元道祖境'
-];
-function realmName(l){ const n=(l|0)-1; return REALMS[n] || `境界${l}`; }
+// 弟子数据：使用独立弟子仓库
+const disciples = computed(() => dStore.members);
 
 // 建筑数据
 const buildings = ref([
@@ -280,9 +288,24 @@ const getStatusText = (status) => {
 };
 
 // 事件处理函数
-const recruitDisciple = () => { heroes.recruitOne(); };
+const recruitDisciple = () => { dStore.recruitOne(); };
 
-const assignTask = (disciple) => { console.log('派遣弟子:', disciple.name); };
+import { useHeroesStore } from '../store/heroes.js';
+import { useGameStore } from '../store/game.js';
+const heroes = useHeroesStore();
+const game = useGameStore();
+
+const assignTask = (disciple) => {
+  if (!disciple) return;
+  if (disciple.status === '驻守') {
+    disciple.status = '寻秘';
+    heroes.addIfNotExists(disciple);
+  } else if (disciple.status === '寻秘') {
+    if (!game.heroAtVillage) return; // 非宗门位置不可切换
+    disciple.status = '驻守';
+    heroes.removeById(disciple.id);
+  }
+};
 
 const startConstruction = (building) => {
   // TODO: 实现开始建设功能

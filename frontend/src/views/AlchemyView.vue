@@ -85,13 +85,38 @@
       </div>
     </div>
   </div>
+
+  <!-- 卷宗研习成功：新旧成本选择弹窗 -->
+  <div v-if="showChoiceModal" class="modal-backdrop" @click.self="showChoiceModal=false">
+    <div class="modal">
+      <h3 style="margin:0 0 6px;">研习成功：选择成本方案</h3>
+      <p class="stat" style="margin:0 0 10px;">你可以在原有“成本”和本次研习得到的“新成本”之间二选一。</p>
+      <h4 style="margin:6px 0;">原成本</h4>
+      <div class="badges" style="margin:8px 0">
+        <span class="badge" v-for="(r,i) in choiceOldCost.req" :key="'oc'+i">{{ r.id }} × {{ r.n }}</span>
+        <span class="badge" v-for="(r,i) in choiceOldCost.opt" :key="'oc2'+i">(可选) {{ r.id }} × {{ r.n }}</span>
+        <span v-if="!(choiceOldCost.req?.length||choiceOldCost.opt?.length)" class="stat">无</span>
+      </div>
+      <h4 style="margin:6px 0;">新成本</h4>
+      <div class="badges" style="margin:8px 0">
+        <span class="badge" v-for="(r,i) in choiceNewCost.req" :key="'nc'+i">{{ r.id }} × {{ r.n }}</span>
+        <span class="badge" v-for="(r,i) in choiceNewCost.opt" :key="'nc2'+i">(可选) {{ r.id }} × {{ r.n }}</span>
+        <span v-if="!(choiceNewCost.req?.length||choiceNewCost.opt?.length)" class="stat">无</span>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
+        <button class="btn" @click="pickChoice('old')">保留原成本</button>
+        <button class="btn" @click="pickChoice('new')">采用新成本</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { onMounted, onBeforeUnmount, reactive, computed, ref, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useInventoryStore } from '../store/inventory.js';
 import { ALL_ORES } from '../models/ore.js';
+import { useScrollsStore, SCROLL_KINDS } from '../store/scrolls.js';
 
 // 暂以常数控制棋盘尺寸；后续可改为外部传入
 const BOARD_SIZE = 4;
@@ -103,6 +128,10 @@ const ANIM_MS = 160;
 
 const inv = useInventoryStore();
 const router = useRouter();
+const route = useRoute();
+const scrolls = useScrollsStore();
+const scrollId = computed(()=> route.query.scroll || null);
+const activeScroll = computed(()=> scrollId.value ? scrolls.getById(scrollId.value) : null);
 const recipe = computed(()=> inv.selectedRecipe);
 // 配方显示名称（去掉括号内容）
   const recipeDisplayName = computed(() => {
@@ -139,6 +168,40 @@ const stacked = ref(false);
 // 失败结果弹窗
 const showFailModal = ref(false);
 const failMessage = ref('');
+// 研习（来自卷宗）成功后的成本选择弹窗
+const showChoiceModal = ref(false);
+const choiceOldCost = ref({ req: [], opt: [] });
+const choiceNewCost = ref({ req: [], opt: [] });
+function cloneCost(c){ return { req: (c?.req||[]).map(x=>({id:x.id, n:x.n})), opt: (c?.opt||[]).map(x=>({id:x.id, n:x.n})) }; }
+function genNewCostFrom(base){
+  const scale = (n) => Math.max(1, Math.round(n * (0.7 + Math.random()*0.8)));
+  return {
+    req: (base.req||[]).map(r => ({ id: r.id, n: scale(r.n) })),
+    opt: (base.opt||[]).map(r => ({ id: r.id, n: scale(r.n) })),
+  };
+}
+function openChoiceForScroll(s){
+  // 对于功法/真经，将 consume 视为 req；对于丹/法器使用 cost
+  const base = (s.kind === SCROLL_KINDS.DAN || s.kind === SCROLL_KINDS.ART)
+    ? (s.cost || { req: [], opt: [] })
+    : { req: (s.consume || []).map(x=>({id:x.id, n:x.n})), opt: [] };
+  choiceOldCost.value = cloneCost(base);
+  choiceNewCost.value = genNewCostFrom(base);
+  showChoiceModal.value = true;
+}
+function pickChoice(which){
+  const s = activeScroll.value; if(!s) return;
+  if(which === 'new'){
+    if(s.kind === SCROLL_KINDS.DAN || s.kind === SCROLL_KINDS.ART){
+      scrolls.setCost(s.id, cloneCost(choiceNewCost.value));
+    } else {
+      // 功法/真经：仅设置 consume（取 req）
+      scrolls.setConsume(s.id, (choiceNewCost.value.req||[]).map(x=>({id:x.id, n:x.n})));
+    }
+  }
+  showChoiceModal.value = false;
+  router.push('/map');
+}
 function computeLayout(){
   const vw = Math.max(320, window.innerWidth || 0);
   const quarter = vw * 0.25;
@@ -447,12 +510,22 @@ function endGame(success, message) {
   }
   
   if (success) {
-  // 研习成功：将新物品加入宗门仓库
-    const recipeName = recipeDisplayName.value;
-    inv.addSectOre(recipeName, 1);
-    alert(`恭喜！${message}`);
-    // 成功仍维持原先的自动返回
-    setTimeout(() => { router.push('/map'); }, 1500);
+    const s = activeScroll.value;
+    if(s){
+      if(s.sealed){
+        scrolls.unseal(s.id);
+        alert('卷宗已解封');
+        setTimeout(()=> router.push('/map'), 800);
+      } else {
+        openChoiceForScroll(s);
+      }
+    } else {
+      // 非卷宗场景：维持原有逻辑
+      const recipeName = recipeDisplayName.value;
+      inv.addSectOre(recipeName, 1);
+      alert(`恭喜！${message}`);
+      setTimeout(() => { router.push('/map'); }, 1500);
+    }
   } else {
     // 失败：以弹窗方式展示结果与各矿消耗明细，由玩家确认后返回
     failMessage.value = message;
@@ -466,9 +539,7 @@ function onKey(e){
   if(d){ e.preventDefault(); move(d); }
 }
 
-function leave(){
-  endGame(false, '放弃离开，研习失败！');
-}
+function leave(){ endGame(false, '放弃离开，研习失败！'); }
 
 function confirmFail(){
   showFailModal.value = false;

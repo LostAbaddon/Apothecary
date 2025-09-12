@@ -26,7 +26,7 @@ const router = useRouter();
 const scrollsStore = useScrollsStore();
 const scrolls = computed(()=> scrollsStore.scrolls);
 
-function study(s){ router.push(`/study/${s.id}`); }
+function study(s){ router.push({ path: '/alchemy', query: { scroll: s.id } }); }
 </script>
 
 <style scoped>
@@ -39,4 +39,3 @@ function study(s){ router.push(`/study/${s.id}`); }
 .actions{ display:flex; gap:6px; }
 .btn-small{ padding:6px 10px; font-size:12px; }
 </style>
-

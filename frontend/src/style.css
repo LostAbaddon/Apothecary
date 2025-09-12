@@ -12,16 +12,28 @@ a{ color: var(--accent); text-decoration: none; }
 .container{ max-width: 1100px; margin: 0 auto; padding: 16px; }
 .nav{ display:flex; gap:12px; padding: 12px; background: var(--panel); border-radius: 8px; margin-bottom: 16px; align-items:center; }
 .nav a{ padding: 8px 10px; border-radius: 6px; transition: all 0.2s ease; }
-.nav a.router-link-active{ 
+.nav a.router-link-active:not([aria-disabled='true']){ 
   background: var(--accent); 
   color: white; 
   font-weight: bold;
   box-shadow: 0 2px 8px rgba(124, 131, 255, 0.3);
 }
-.nav a:hover:not(.router-link-active) {
+.nav a:hover:not(.router-link-active):not([aria-disabled='true']) {
   background: #23273d;
 }
 .nav.disabled a{ opacity:.5; pointer-events:none; cursor: default; }
+/* 明确禁用态：用于 ‘福地寻秘’ 在队伍人数为0时 */
+.nav a[aria-disabled='true']{
+  opacity: .5;
+  pointer-events: none;
+  cursor: default;
+  color: var(--muted);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.nav a[aria-disabled='true']:hover{
+  background: transparent;
+}
 .panel{ background: var(--panel); padding: 12px; border-radius: 10px; }
 .row{ display:flex; gap:12px; align-items:stretch; }
 .col{ flex:1; }

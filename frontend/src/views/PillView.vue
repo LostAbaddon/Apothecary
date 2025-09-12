@@ -6,10 +6,10 @@
         <div class="info">
           <div class="name">{{ s.name }}</div>
           <div class="meta">必须材料：
-            <span v-for="r in s.cost?.req || []" :key="r.id" class="badge">{{ r.id }} × {{ r.n }}</span>
+            <span v-for="r in s.cost?.req || []" :key="r.id" class="badge">{{ oreName(r.id) }} × {{ r.n }}</span>
           </div>
           <div class="meta">可选药引：
-            <span v-for="r in s.cost?.opt || []" :key="r.id" class="badge opt">{{ r.id }} × {{ r.n }}</span>
+            <span v-for="r in s.cost?.opt || []" :key="r.id" class="badge opt">{{ oreName(r.id) }} × {{ r.n }}</span>
           </div>
         </div>
         <div class="actions">
@@ -24,10 +24,13 @@
 import { computed } from 'vue';
 import { useScrollsStore, SCROLL_KINDS } from '../store/scrolls.js';
 import { useInventoryStore } from '../store/inventory.js';
+import { ALL_ORES } from '../models/ore.js';
 
 const scrolls = useScrollsStore();
 const inv = useInventoryStore();
 const list = computed(()=> scrolls.byKind(SCROLL_KINDS.DAN));
+const ORE_NAME_MAP = Object.fromEntries(ALL_ORES.map(o => [o.id, o.name]));
+const oreName = (id) => ORE_NAME_MAP[id] || id;
 
 function hasEnough(cost){
   return (cost?.req || []).every(r => (inv.sectInventory[r.id] || 0) >= r.n);
@@ -55,4 +58,3 @@ function craft(s){
 .actions{ display:flex; gap:6px; }
 .btn-small{ padding:6px 10px; font-size:12px; }
 </style>
-

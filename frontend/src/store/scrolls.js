@@ -26,6 +26,6 @@ export const useScrollsStore = defineStore('scrolls', {
   actions: {
     unseal(id){ const it = this.scrolls.find(x => x.id === id); if(it) it.sealed = false; },
     setCost(id, cost){ const it = this.scrolls.find(x => x.id === id); if(it) it.cost = cost; },
+    setConsume(id, consume){ const it = this.scrolls.find(x => x.id === id); if(it) it.consume = consume; },
   }
 });
-

@@ -98,7 +98,7 @@ import { useRouter } from 'vue-router';
 import { showToast } from '../composables/toast.js';
 import { toasts } from '../composables/toast.js';
 import { ALL_ORES } from '../models/ore.js';
-import { useHeroesStore } from '../store/heroes.js';
+import { levelName } from '../models/realms.js';
 import { useInventoryStore } from '../store/inventory.js';
 import { useGameStore } from '../store/game.js';
 import { useHeroesStore } from '../store/heroes.js';
@@ -139,15 +139,7 @@ const hero = reactive({ x: 0, y: 0 });
 const heroes = useHeroesStore();
 const heroesCount = computed(()=> heroes.count);
 const showHeroes = ref(false);
-// 境界名称映射：从 1 开始
-const REALMS = [
-  '炼气期','筑基期','金丹期','元婴期','化神期','炼虚期','合体期','大乘期','渡劫期',
-  '真仙境','天仙境','金仙境','太乙金仙境','大罗金仙境','道祖境','混元道祖境'
-];
-function levelName(l){
-  const n = (l|0) - 1;
-  return REALMS[n] || `境界${l}`;
-}
+// 统一使用 models/realms 提供的 levelName
 // 内联提示：仅显示最新一条 toast 内容
 const currentTip = computed(() => {
   const list = toasts.value;
@@ -298,6 +290,8 @@ async function reroll(){
     // 下一帧开启后续过渡（仅用于后续移动）
     await nextTick();
     spawnAnimated.value = true;
+    // 标记位置在宗门
+    game.setHeroAtVillage(true);
   }
   // 不再自动生成默认英雄；初始队伍为 0
   // 初始化战争迷雾：以英雄为中心揭示
@@ -480,6 +474,8 @@ function handleKeydown(e){
   heroDisplay.x = hero.x; heroDisplay.y = hero.y;
   // 更新战争迷雾
   markSeenAround(hero.x, hero.y);
+  // 更新是否在宗门位置
+  game.setHeroAtVillage(tile.terrain === 'village');
   // 草原/森林有概率遭遇邪修（隐形）
   maybeEncounter(tile);
   // 若活力耗尽，则进入下一天
