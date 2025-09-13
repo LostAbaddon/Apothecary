@@ -340,7 +340,11 @@ onActivated(async ()=>{
     if(Number.isFinite(used) && used > 0){
       // 消耗与洞天中实际使用掉的次数相同的活力
       energy.value = Math.max(0, (energy.value|0) - used);
-      // 本次不进入下一天
+      // 若体力已耗尽，则自动入夜，避免“既不能移动又无法入夜”的卡死
+      if(energy.value === 0){
+        await advanceDay();
+      }
+      // 体力未耗尽则本次不进入下一天
     } else {
       // 若洞天中未消耗挖掘次数（或未提供 used），则进入下一天
       await advanceDay();
