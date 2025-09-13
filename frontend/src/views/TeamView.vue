@@ -6,12 +6,18 @@
         <p class="stat">当前在编的求道者列表。</p>
           <div class="team-list">
           <div v-for="m in heroes.members" :key="m.id" class="member">
-            <div class="avatar">{{ m.sevenColor != null ? '🜍' : '🧙' }}</div>
+            <div class="avatar">{{ m.seven ? '🜍' : '🧙' }}</div>
             <div class="info">
               <div class="name">{{ m.name }}</div>
               <div class="attrs">
                 <span class="attr">境界：{{ levelName(m.level) }}</span>
-                <span class="attr">七曜：{{ m.sevenColor }}</span>
+                <span class="attr">金：{{ m.seven?.metal ?? 0 }}</span>
+                <span class="attr">木：{{ m.seven?.wood ?? 0 }}</span>
+                <span class="attr">水：{{ m.seven?.water ?? 0 }}</span>
+                <span class="attr">火：{{ m.seven?.fire ?? 0 }}</span>
+                <span class="attr">土：{{ m.seven?.earth ?? 0 }}</span>
+                <span class="attr">日：{{ m.seven?.sun ?? 0 }}</span>
+                <span class="attr">月：{{ m.seven?.moon ?? 0 }}</span>
                 <span class="attr">体力：{{ m.hp }}</span>
                 <span class="attr">真元：{{ m.mp }}</span>
                 <span class="attr">攻击：{{ m.atk }}</span>

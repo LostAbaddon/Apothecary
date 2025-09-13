@@ -35,7 +35,16 @@ function initialMembers(){
   const list = [];
   for(let i=0;i<10;i++){
     const name = genName(used); used.add(name);
-    const seven = Math.floor(Math.random()*7);
+    // 七曜：金木水火土日月
+    const seven = {
+      metal: Math.floor(Math.random()*11),
+      wood: Math.floor(Math.random()*11),
+      water: Math.floor(Math.random()*11),
+      fire: Math.floor(Math.random()*11),
+      earth: Math.floor(Math.random()*11),
+      sun: Math.floor(Math.random()*11),
+      moon: Math.floor(Math.random()*11),
+    };
     list.push({
       id: i+1,
       name,
@@ -44,7 +53,7 @@ function initialMembers(){
       mp: 100,
       atk: 10,
       def: 10,
-      sevenColor: seven,
+      seven,
       artifacts: [],
       externals: [],
       internals: [],
@@ -68,7 +77,15 @@ export const useDisciplesStore = defineStore('disciples', {
       if (this.members.length >= (this.max|0)) return null;
       const used = new Set(this.members.map(m => m.name));
       const name = genName(used);
-      const seven = Math.floor(Math.random()*7);
+      const seven = {
+        metal: Math.floor(Math.random()*11),
+        wood: Math.floor(Math.random()*11),
+        water: Math.floor(Math.random()*11),
+        fire: Math.floor(Math.random()*11),
+        earth: Math.floor(Math.random()*11),
+        sun: Math.floor(Math.random()*11),
+        moon: Math.floor(Math.random()*11),
+      };
       this.members.push({
         id: this.nextId++,
         name,
@@ -77,7 +94,7 @@ export const useDisciplesStore = defineStore('disciples', {
         mp: 100,
         atk: 10,
         def: 10,
-        sevenColor: seven,
+        seven,
         artifacts: [],
         externals: [],
         internals: [],

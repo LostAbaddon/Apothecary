@@ -5,7 +5,7 @@
       <div v-for="s in list" :key="s.id" class="item">
         <div class="info">
           <div class="name">{{ s.name }}</div>
-          <div class="meta">条件：七曜 ≥ {{ s.reqs?.sevenMin ?? 0 }}，境界 ≥ {{ s.reqs?.levelMin ?? 1 }}</div>
+          <div class="meta">条件：七曜总 ≥ {{ s.reqs?.sevenMin ?? 0 }}，境界 ≥ {{ s.reqs?.levelMin ?? 1 }}</div>
           <div class="meta">悟道消耗：<span v-for="c in s.consume || []" :key="c.id" class="badge">{{ c.id }} × {{ c.n }}</span></div>
         </div>
         <div class="actions">
@@ -23,7 +23,7 @@
             :key="d.id"
             class="row"
             @click="select(d)"
-            :title="`七曜:${d.sevenColor} 境界:${d.level}`"
+            :title="`七曜总:${sevenTotal(d)} 境界:${d.level}`"
           >{{ d.name }}（{{ d.level }}）</div>
         </div>
         <div v-if="selected" style="margin-top:12px; display:flex; gap:8px;">
@@ -51,12 +51,17 @@ const selectedScroll = ref(null);
 const selected = ref(null);
 const candidates = computed(()=> heroes.members.filter(d => d.status === '驻守'));
 
+function sevenTotal(d){
+  const s = d?.seven || {}; const v = (x)=> Number(x||0);
+  return v(s.metal)+v(s.wood)+v(s.water)+v(s.fire)+v(s.earth)+v(s.sun)+v(s.moon);
+}
+
 function hasEnoughCost(s){ return (s.consume||[]).every(c => (inv.sectInventory[c.id]||0) >= c.n); }
 function choose(s){ selectedScroll.value = s; showPick.value = true; selected.value = null; }
 function cancel(){ showPick.value = false; selectedScroll.value = null; selected.value = null; }
 function select(d){
   const s = selectedScroll.value; if(!s) return;
-  if((d.sevenColor|0) < (s.reqs?.sevenMin ?? 0)) return alert('七曜属性不足');
+  if(sevenTotal(d) < (s.reqs?.sevenMin ?? 0)) return alert('七曜属性不足');
   if((d.level|0) < (s.reqs?.levelMin ?? 1)) return alert('境界不足');
   if(!hasEnoughCost(s)) return alert('资源不足');
   selected.value = d;

@@ -82,7 +82,7 @@
             <p class="section-description">管理宗门弟子的修行与任务分配</p>
           <div class="disciples-grid">
             <div v-for="disciple in disciples" :key="disciple.id" class="disciple-card">
-              <div class="disciple-avatar">{{ disciple.sevenColor != null ? '🜍' : '🧙' }}</div>
+              <div class="disciple-avatar">{{ disciple.seven ? '🜍' : '🧙' }}</div>
               <div class="disciple-info one-line">
                 <div class="disciple-line">
                   <span class="disciple-name-strong">{{ disciple.name }}</span>
