@@ -373,7 +373,7 @@ const openSectHistory = () => {
   overflow: hidden;
 }
 
-.sect-title-row{ display:flex; align-items: baseline; gap:12px; flex-wrap: wrap; }
+.sect-title-row{ display:flex; align-items: center; gap:16px; flex-wrap: wrap; }
 .sect-title-name{ margin:0; }
 
 .sect-title-container::before {
@@ -408,6 +408,9 @@ const openSectHistory = () => {
   font-weight: bold;
   font-size: 14px;
   box-shadow: 0 2px 8px rgba(124, 131, 255, 0.3);
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 /* 宗门概览 */
