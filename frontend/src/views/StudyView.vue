@@ -10,8 +10,8 @@
 
     <div v-if="offer" class="offer">
       <h3 style="margin:0 0 6px;">研习成功：选择新的消耗或保留原方案</h3>
-      <div class="meta">原方案：必需 <span v-for="r in oldCost.req" :key="'o'+r.id" class="badge">{{ r.id }}×{{ r.n }}</span> 可选 <span v-for="r in oldCost.opt" :key="'oo'+r.id" class="badge">{{ r.id }}×{{ r.n }}</span></div>
-      <div class="meta">新方案：必需 <span v-for="r in newCost.req" :key="'n'+r.id" class="badge">{{ r.id }}×{{ r.n }}</span> 可选 <span v-for="r in newCost.opt" :key="'no'+r.id" class="badge">{{ r.id }}×{{ r.n }}</span></div>
+      <div class="meta">原方案：必需 <span v-for="r in oldCost.req" :key="'o'+r.id" class="badge">{{ oreName(r.id) }}×{{ r.n }}</span> 可选 <span v-for="r in oldCost.opt" :key="'oo'+r.id" class="badge">{{ oreName(r.id) }}×{{ r.n }}</span></div>
+      <div class="meta">新方案：必需 <span v-for="r in newCost.req" :key="'n'+r.id" class="badge">{{ oreName(r.id) }}×{{ r.n }}</span> 可选 <span v-for="r in newCost.opt" :key="'no'+r.id" class="badge">{{ oreName(r.id) }}×{{ r.n }}</span></div>
       <div class="actions">
         <button class="btn btn-small" @click="choose('old')">保留原方案</button>
         <button class="btn btn-small" @click="choose('new')">采用新方案</button>
@@ -24,6 +24,7 @@
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useScrollsStore } from '../store/scrolls.js';
+import { ALL_ORES } from '../models/ore.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -34,6 +35,10 @@ const scroll = computed(()=> store.getById(id.value));
 const offer = ref(false);
 const oldCost = ref({ req: [], opt: [] });
 const newCost = ref({ req: [], opt: [] });
+
+// 显示材料中文名
+const ORE_NAME_MAP = Object.fromEntries(ALL_ORES.map(o => [o.id, o.name]));
+const oreName = (id) => ORE_NAME_MAP[id] || id;
 
 function success(){
   const s = scroll.value; if(!s) return;

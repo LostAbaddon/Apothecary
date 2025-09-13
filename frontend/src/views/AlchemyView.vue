@@ -93,14 +93,14 @@
       <p class="stat" style="margin:0 0 10px;">你可以在原有“成本”和本次研习得到的“新成本”之间二选一。</p>
       <h4 style="margin:6px 0;">原成本</h4>
       <div class="badges" style="margin:8px 0">
-        <span class="badge" v-for="(r,i) in choiceOldCost.req" :key="'oc'+i">{{ r.id }} × {{ r.n }}</span>
-        <span class="badge" v-for="(r,i) in choiceOldCost.opt" :key="'oc2'+i">(可选) {{ r.id }} × {{ r.n }}</span>
+        <span class="badge" v-for="(r,i) in choiceOldCost.req" :key="'oc'+i">{{ oreDisplayName(r.id) }} × {{ r.n }}</span>
+        <span class="badge" v-for="(r,i) in choiceOldCost.opt" :key="'oc2'+i">(可选) {{ oreDisplayName(r.id) }} × {{ r.n }}</span>
         <span v-if="!(choiceOldCost.req?.length||choiceOldCost.opt?.length)" class="stat">无</span>
       </div>
       <h4 style="margin:6px 0;">新成本</h4>
       <div class="badges" style="margin:8px 0">
-        <span class="badge" v-for="(r,i) in choiceNewCost.req" :key="'nc'+i">{{ r.id }} × {{ r.n }}</span>
-        <span class="badge" v-for="(r,i) in choiceNewCost.opt" :key="'nc2'+i">(可选) {{ r.id }} × {{ r.n }}</span>
+        <span class="badge" v-for="(r,i) in choiceNewCost.req" :key="'nc'+i">{{ oreDisplayName(r.id) }} × {{ r.n }}</span>
+        <span class="badge" v-for="(r,i) in choiceNewCost.opt" :key="'nc2'+i">(可选) {{ oreDisplayName(r.id) }} × {{ r.n }}</span>
         <span v-if="!(choiceNewCost.req?.length||choiceNewCost.opt?.length)" class="stat">无</span>
       </div>
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
