@@ -256,8 +256,21 @@ function spawn(count=1){
     const empties = emptyCells();
     if(empties.length===0) return;
     const [x,y] = empties[Math.floor(Math.random()*empties.length)];
-    const pool = recipe.value.pool;
-    const ore = pool[Math.floor(Math.random()*pool.length)];
+    const pool = Array.isArray(recipe.value.pool) ? recipe.value.pool : [];
+    // 选取当前棋盘中数量最少的材料（不考虑等级/经验）；若有并列则在并列中随机
+    let ore = null;
+    if(pool.length){
+      const counts = Object.fromEntries(pool.map(id => [id, 0]));
+      for(let yy=0; yy<boardSize.value; yy++) for(let xx=0; xx<boardSize.value; xx++){
+        const t = state.board[yy][xx];
+        if(t && Object.prototype.hasOwnProperty.call(counts, t.ore)) counts[t.ore] = (counts[t.ore]||0) + 1;
+      }
+      let min = Infinity; for(const id of pool){ const c = counts[id]||0; if(c < min) min = c; }
+      const candidates = pool.filter(id => (counts[id]||0) === min);
+      ore = candidates[Math.floor(Math.random() * candidates.length)] || pool[0];
+    } else {
+      ore = 'C'; // 极端兜底：应由卷宗配置保证非空
+    }
     // 颜色选择：首次随机；之后在“保持当前色/前进一色”中随机
     let color;
     if(lastSpawnColor.value == null){
