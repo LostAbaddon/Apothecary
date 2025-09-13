@@ -24,6 +24,6 @@ import { useInventoryStore } from '../store/inventory.js';
 
 const inv = useInventoryStore();
 const { inventory } = storeToRefs(inv);
-const entries = computed(() => Object.entries(inventory.value));
+const entries = computed(() => Object.entries(inventory.value).filter(([,cnt]) => (cnt|0) > 0));
 const total = computed(()=> Object.values(inventory.value).reduce((a,b)=> a + (b||0), 0));
 </script>
