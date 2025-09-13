@@ -338,16 +338,16 @@ function compressAndMerge(items, consumedList){
       const bExp = Number(b.exp) || 0;
       // 矿种选择：同矿保留原矿；异矿由“后方”覆盖“前方”（b 覆盖 a）
       const ore = sameOre ? a.ore : b.ore;
-      // 经验规则：同矿相加；异矿取“后方”经验（b）
-      const exp = sameOre ? (aExp + bExp) : bExp;
+      // 经验规则：
+      // - 同矿：经验相加
+      // - 异矿：后者覆盖前者，且“等级(经验)固定 +1”
+      const exp = sameOre ? (aExp + bExp) : (bExp + 1);
       // 材料损耗统计：同色不同矿合并时，“前方”矿 a 被吞没
       if(!sameOre && consumedList){ consumedList.push(a.ore); }
       const nextColor = cycleColor(a.color);
       const baseTier = Math.max(Number(a.tier)||0, Number(b.tier)||0);
       const wrapped = (a.color === 6 && nextColor === 0);
       let tier = wrapped ? (baseTier + 1) : baseTier;
-      // 异矿合并：后者覆盖前者，且等级固定 +1（不依赖颜色循环）
-      if(!sameOre) tier = tier + 1;
       const merged = { color: nextColor, ore, exp, tier, id: Math.random().toString(36).slice(2) };
       merged.pulse = true; // 合并后脉冲动画
       res.push(merged);
