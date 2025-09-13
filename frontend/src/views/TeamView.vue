@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col">
       <div class="panel">
-        <h2>求道者队伍 <small class="stat" style="margin-left:8px;">{{ heroesCount }}/5</small></h2>
+        <h2>求道者队伍</h2>
         <p class="stat">当前在编的求道者列表。</p>
           <div class="team-list">
           <div v-for="m in heroes.members" :key="m.id" class="member">
@@ -55,7 +55,6 @@ const entries = computed(() => Object.entries(inventory.value));
 const total = computed(() => Object.values(inventory.value).reduce((a,b)=> a + (b||0), 0));
 
 const heroes = useHeroesStore();
-const heroesCount = computed(()=> heroes.count | 0);
 </script>
 
 <style scoped>
