@@ -14,7 +14,8 @@ export const useScrollsStore = defineStore('scrolls', {
       { id: 'rx-001', name: '回春丹谱', sealed: true, kind: SCROLL_KINDS.DAN, cost: { req: [{ id: 'C', n: 10 }], opt: [{ id: 'A', n: 5 }] } },
       { id: 'fa-001', name: '灵犀刃诀', sealed: true, kind: SCROLL_KINDS.ART, cost: { req: [{ id: 'D', n: 12 }], opt: [{ id: 'E', n: 6 }] } },
       { id: 'gf-001', name: '清心诀', sealed: true, kind: SCROLL_KINDS.GONG, reqs: { sevenMin: 2, levelMin: 2, prereq: [] }, durationDays: 3, consume: [{ id: 'A', n: 8 }] },
-      { id: 'zj-001', name: '符箓天书·初篇', sealed: true, kind: SCROLL_KINDS.ZHEN, reqs: { sevenMin: 1, levelMin: 2, prereq: [] }, durationDays: 3, consume: [{ id: 'B', n: 8 }] },
+      // 名称避免与种类重复，显示时会加简写前缀（见 PavilionView）
+      { id: 'zj-001', name: '灵篆初篇', sealed: true, kind: SCROLL_KINDS.ZHEN, reqs: { sevenMin: 1, levelMin: 2, prereq: [] }, durationDays: 3, consume: [{ id: 'B', n: 8 }] },
     ],
   }),
   getters: {
