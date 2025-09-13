@@ -39,19 +39,20 @@ const heroes = useHeroesStore();
 const log = ref([]);
 
 function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
-function pickOreId(){ return (ALL_ORES[randInt(0, ALL_ORES.length - 1)] || {}).id || 'A'; }
+function pickOre(){ return ALL_ORES[randInt(0, ALL_ORES.length - 1)] || { id: 'A', name: '未知矿石' }; }
 
 function win(){
-  // 胜利奖励：随机一种（矿石或随机卷宗解封）
-  if(Math.random() < 0.5 && scrolls.sealedList.length){
+  // 胜利奖励：
+  // 1) 必定获得矿石（名称显示中文名）
+  const ore = pickOre();
+  const cnt = randInt(5, 20);
+  inv.addSectOreById(ore.id, cnt);
+  log.value.push(`战胜邪修，获得矿石 ${ore.name} × ${cnt}`);
+  // 2) 额外有较高概率（80%）解封一份卷宗（若仍有未解封）
+  if (scrolls.sealedList.length && Math.random() < 0.8) {
     const s = scrolls.sealedList[randInt(0, scrolls.sealedList.length - 1)];
     scrolls.unseal(s.id);
-    log.value.push(`战胜邪修，获得卷宗线索，解封《${s.name}》`);
-  } else {
-    const oreId = pickOreId();
-    const cnt = randInt(5, 20);
-    inv.addSectOreById(oreId, cnt);
-    log.value.push(`战胜邪修，获得矿石 ${oreId} × ${cnt}`);
+    log.value.push(`获得卷宗线索，解封《${s.name}》`);
   }
 }
 
