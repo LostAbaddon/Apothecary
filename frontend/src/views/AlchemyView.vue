@@ -345,7 +345,9 @@ function compressAndMerge(items, consumedList){
       const nextColor = cycleColor(a.color);
       const baseTier = Math.max(Number(a.tier)||0, Number(b.tier)||0);
       const wrapped = (a.color === 6 && nextColor === 0);
-      const tier = wrapped ? (baseTier + 1) : baseTier;
+      let tier = wrapped ? (baseTier + 1) : baseTier;
+      // 异矿合并：后者覆盖前者，且等级固定 +1（不依赖颜色循环）
+      if(!sameOre) tier = tier + 1;
       const merged = { color: nextColor, ore, exp, tier, id: Math.random().toString(36).slice(2) };
       merged.pulse = true; // 合并后脉冲动画
       res.push(merged);
