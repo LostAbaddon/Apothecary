@@ -80,19 +80,20 @@
           </div>
           <div class="disciples-content">
             <p class="section-description">管理宗门弟子的修行与任务分配</p>
-            <div class="disciples-grid">
-              <div v-for="disciple in disciples" :key="disciple.id" class="disciple-card">
-                <div class="disciple-avatar">{{ disciple.sevenColor != null ? '🜍' : '🧙' }}</div>
-                <div class="disciple-info">
-                  <div class="disciple-name">{{ disciple.name }}</div>
-                  <div class="disciple-level">{{ levelName(disciple.level) }}</div>
-                  <div class="disciple-status" :class="disciple.status">{{ getStatusText(disciple.status) }}</div>
+          <div class="disciples-grid">
+            <div v-for="disciple in disciples" :key="disciple.id" class="disciple-card">
+              <div class="disciple-avatar">{{ disciple.sevenColor != null ? '🜍' : '🧙' }}</div>
+              <div class="disciple-info one-line">
+                <div class="disciple-line">
+                  <span class="disciple-name-strong">{{ disciple.name }}</span>
+                  <span class="disciple-meta">（{{ levelName(disciple.level) }} ｜ {{ getStatusText(disciple.status) }}）</span>
                 </div>
-                <div class="disciple-actions">
-                  <button
-                    v-if="disciple.status === '驻守'"
-                    class="btn btn-tiny"
-                    :disabled="heroes.count >= 5"
+              </div>
+              <div class="disciple-actions">
+                <button
+                  v-if="disciple.status === '驻守'"
+                  class="btn btn-tiny"
+                  :disabled="heroes.count >= 5"
                     :title="heroes.count >= 5 ? '队伍已满（最多5人）' : ''"
                     @click="assignTask(disciple)"
                   >派遣</button>
@@ -128,8 +129,10 @@
               <div v-for="building in buildings" :key="building.id" class="building-card" :class="{ built: building.built, constructing: building.constructing }">
                 <div class="building-icon">{{ building.icon }}</div>
                 <div class="building-info">
-                  <div class="building-name">{{ building.name }}</div>
-                  <div class="building-description">{{ building.description }}</div>
+                  <div class="building-name">
+                    <span class="building-name-strong">{{ building.name }}</span>
+                    <span class="building-meta">（{{ building.description }}）</span>
+                  </div>
                   <div class="building-status">
                     <span v-if="building.built" class="status-built">{{ building.level }}级</span>
                     <span v-else-if="building.constructing" class="status-constructing">建设中 {{ building.progress }}%</span>
@@ -518,6 +521,7 @@ const openSectHistory = () => {
 .section-actions {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .section-description {
@@ -652,6 +656,11 @@ const openSectHistory = () => {
   flex: 1;
 }
 
+/* 一行显示：名字（境界 ｜ 状态） */
+.disciple-line { display:flex; align-items: baseline; gap:6px; flex-wrap: wrap; }
+.disciple-name-strong { font-weight: 800; color: var(--text); font-size: 15px; }
+.disciple-meta { font-size: 12px; color: var(--muted); font-weight: 400; }
+
 .disciple-name {
   font-weight: bold;
   color: var(--text);
@@ -733,17 +742,11 @@ const openSectHistory = () => {
   flex: 1;
 }
 
-.building-name {
-  font-weight: bold;
-  color: var(--text);
-  margin-bottom: 4px;
-}
+.building-name { font-weight: 700; color: var(--text); margin-bottom: 4px; display:flex; align-items: baseline; gap:6px; flex-wrap: wrap; }
+.building-name-strong { font-weight: 800; color: var(--text); }
+.building-meta { font-size: 12px; color: var(--muted); font-weight: 400; }
 
-.building-description {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
+.sect-level { align-self: center; display:flex; align-items:center; }
 
 .status-built {
   color: #2ecc71;
