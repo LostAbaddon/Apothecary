@@ -28,7 +28,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useInventoryStore } from '../store/inventory.js';
-import { useScrollsStore } from '../store/scrolls.js';
+import { useScrollsStore, SCROLL_KINDS } from '../store/scrolls.js';
 import { useHeroesStore } from '../store/heroes.js';
 import { ALL_ORES } from '../models/ore.js';
 
@@ -41,6 +41,32 @@ const log = ref([]);
 function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pickOre(){ return ALL_ORES[randInt(0, ALL_ORES.length - 1)] || { id: 'A', name: '未知矿石' }; }
 
+function eligibleSealedScrolls(){
+  // 不重复：排除已获得（owned=true）以及行囊中已存在的“卷宗·《name》”
+  const inBag = new Set(Object.keys(inv.inventory || {}));
+  return scrolls.sealedList.filter(s => !s.owned && !inBag.has(`卷宗·《${s.name}》`));
+}
+
+function pickWeightedSealedScroll(){
+  const list = eligibleSealedScrolls();
+  if(!list.length) return null;
+  const weightMap = new Map([
+    [SCROLL_KINDS.DAN, 3],
+    [SCROLL_KINDS.ART, 3],
+    [SCROLL_KINDS.GONG, 2],
+    [SCROLL_KINDS.ZHEN, 1],
+  ]);
+  const weights = list.map(s => weightMap.get(s.kind) || 1);
+  const total = weights.reduce((a,b)=>a+b, 0) || 0;
+  if(total <= 0) return list[0];
+  let r = Math.random() * total;
+  for(let i=0;i<list.length;i++){
+    r -= weights[i];
+    if(r <= 0) return list[i];
+  }
+  return list[list.length - 1];
+}
+
 function win(){
   // 胜利奖励：
   // 1) 必定获得矿石（进入行囊；日志不出现“矿石”字样）
@@ -48,12 +74,14 @@ function win(){
   const cnt = randInt(5, 20);
   inv.addOre(ore.name, cnt);
   log.value.push(`战胜邪修，获得 ${ore.name} × ${cnt}`);
-  // 2) 额外有较高概率（80%）掉落“未解封”的卷宗（进入行囊，不直接解封）
-  if (scrolls.sealedList.length && Math.random() < 0.3) {
-    const s = scrolls.sealedList[randInt(0, scrolls.sealedList.length - 1)];
-    const itemName = `卷宗·《${s.name}》`;
-    inv.addOre(itemName, 1);
-    log.value.push(`同时获得 ${itemName} × 1`);
+  // 2) 额外以 60% 概率掉落“未解封”的卷宗（进入行囊，不直接解封），并按 3:3:2:1 权重区分种类
+  if (Math.random() < 0.6) {
+    const s = pickWeightedSealedScroll();
+    if(s){
+      const itemName = `卷宗·《${s.name}》`;
+      inv.addOre(itemName, 1);
+      log.value.push(`同时获得 ${itemName} × 1`);
+    }
   }
 }
 
