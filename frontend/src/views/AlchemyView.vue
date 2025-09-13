@@ -27,7 +27,7 @@
           <button class="btn" @click="move('left')">←</button>
           <button class="btn" @click="move('down')">↓</button>
           <button class="btn" @click="move('right')">→</button>
-          <button class="btn" @click="leave" title="放弃离开，返回福地">放弃离开</button>
+          <button class="btn" @click="leave" title="放弃离开，返回龙吟阁">放弃离开</button>
           <span class="stat" v-if="won">已满足配方要求，研习成功！</span>
           <span class="stat" v-else>用方向键或按钮移动。</span>
         </div>
@@ -81,7 +81,7 @@
         <span v-if="!consumedEntries.length" class="stat">本次未消耗任何矿石</span>
       </div>
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
-        <button class="btn" @click="confirmFail">返回福地</button>
+        <button class="btn" @click="confirmFail">返回龙吟阁</button>
       </div>
     </div>
   </div>
@@ -581,7 +581,7 @@ function leave(){ endGame(false, '放弃离开，研习失败！'); }
 
 function confirmFail(){
   showFailModal.value = false;
-  router.push('/map');
+  router.push('/pavilion');
 }
 
 onMounted(async ()=>{
