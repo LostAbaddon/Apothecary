@@ -89,7 +89,7 @@
   <!-- 卷宗研习成功：新旧成本选择弹窗 -->
   <div v-if="showChoiceModal" class="modal-backdrop" @click.self="showChoiceModal=false">
     <div class="modal">
-      <h3 style="margin:0 0 6px;">研习成功：选择成本方案</h3>
+      <h3 style="margin:0 0 6px;">{{ choiceReadonly ? '研习成功：新成本已生成' : '研习成功：选择成本方案' }}</h3>
       <p class="stat" style="margin:0 0 10px;">你可以在原有“成本”和本次研习得到的“新成本”之间二选一。</p>
       <h4 style="margin:6px 0;">原成本</h4>
       <div class="badges" style="margin:8px 0">
@@ -104,8 +104,13 @@
         <span v-if="!(choiceNewCost.req?.length||choiceNewCost.opt?.length)" class="stat">无</span>
       </div>
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
-        <button class="btn" @click="pickChoice('old')">保留原成本</button>
-        <button class="btn" @click="pickChoice('new')">采用新成本</button>
+        <template v-if="!choiceReadonly">
+          <button class="btn" @click="pickChoice('old')">保留原成本</button>
+          <button class="btn" @click="pickChoice('new')">采用新成本</button>
+        </template>
+        <template v-else>
+          <button class="btn" @click="confirmSettle">返回龙吟阁</button>
+        </template>
       </div>
     </div>
   </div>
@@ -190,6 +195,7 @@ const showFailModal = ref(false);
 const failMessage = ref('');
 // 研习（来自卷宗）成功后的成本选择弹窗
 const showChoiceModal = ref(false);
+const choiceReadonly = ref(false);
 const choiceOldCost = ref({ req: [], opt: [] });
 const choiceNewCost = ref({ req: [], opt: [] });
 function cloneCost(c){ return { req: (c?.req||[]).map(x=>({id:x.id, n:x.n})), opt: (c?.opt||[]).map(x=>({id:x.id, n:x.n})) }; }
@@ -208,6 +214,7 @@ function openChoiceForScroll(s){
     : { req: (s.consume || []).map(x=>({id:x.id, n:x.n})), opt: [] };
   choiceOldCost.value = cloneCost(base);
   choiceNewCost.value = genNewCostFrom(base);
+  choiceReadonly.value = false;
   showChoiceModal.value = true;
 }
 function pickChoice(which){
@@ -220,6 +227,11 @@ function pickChoice(which){
       scrolls.setConsume(s.id, (choiceNewCost.value.req||[]).map(x=>({id:x.id, n:x.n})));
     }
   }
+  showChoiceModal.value = false;
+  router.push('/pavilion');
+}
+
+function confirmSettle(){
   showChoiceModal.value = false;
   router.push('/pavilion');
 }
@@ -547,9 +559,22 @@ function endGame(success, message) {
     const s = activeScroll.value;
     if(s){
       if(s.sealed){
+        // 解封：直接将“本局损耗”作为新成本写入，并以结算弹窗展示（只读，无需选择）
         scrolls.unseal(s.id);
-        alert('卷宗已解封');
-        setTimeout(()=> router.push('/pavilion'), 800);
+        // 基准用于展示对比（原始成本/消耗）
+        const base = (s.kind === SCROLL_KINDS.DAN || s.kind === SCROLL_KINDS.ART)
+          ? (s.cost || { req: [], opt: [] })
+          : { req: (s.consume || []).map(x=>({id:x.id, n:x.n})), opt: [] };
+        choiceOldCost.value = cloneCost(base);
+        choiceNewCost.value = genNewCostFrom(base);
+        // 写入新成本
+        if(s.kind === SCROLL_KINDS.DAN || s.kind === SCROLL_KINDS.ART){
+          scrolls.setCost(s.id, cloneCost(choiceNewCost.value));
+        } else {
+          scrolls.setConsume(s.id, (choiceNewCost.value.req||[]).map(x=>({id:x.id, n:x.n})));
+        }
+        choiceReadonly.value = true;
+        showChoiceModal.value = true;
       } else {
         openChoiceForScroll(s);
       }
