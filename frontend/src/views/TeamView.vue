@@ -46,6 +46,8 @@ const heroesCount = computed(()=> heroes.count | 0);
 </script>
 
 <style scoped>
+.row{ flex-direction: column; }
+.col{ flex: none; }
 .team-list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
 .member{ display:flex; align-items:center; gap:10px; background:#23273d; border:1px solid #3a3f62; border-radius:10px; padding:10px; }
 .avatar{ width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(124,131,255,.1); font-size:18px; }
@@ -54,4 +56,3 @@ const heroesCount = computed(()=> heroes.count | 0);
 .meta{ font-size:12px; color:var(--muted); }
 .empty{ color:var(--muted); font-size:14px; padding:8px; text-align:center; }
 </style>
-
