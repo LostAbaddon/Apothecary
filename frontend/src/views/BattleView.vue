@@ -43,16 +43,17 @@ function pickOre(){ return ALL_ORES[randInt(0, ALL_ORES.length - 1)] || { id: 'A
 
 function win(){
   // 胜利奖励：
-  // 1) 必定获得矿石（名称显示中文名）
+  // 1) 必定获得矿石（进入行囊；日志不出现“矿石”字样）
   const ore = pickOre();
   const cnt = randInt(5, 20);
-  inv.addSectOreById(ore.id, cnt);
-  log.value.push(`战胜邪修，获得矿石 ${ore.name} × ${cnt}`);
-  // 2) 额外有较高概率（80%）解封一份卷宗（若仍有未解封）
+  inv.addOre(ore.name, cnt);
+  log.value.push(`战胜邪修，获得 ${ore.name} × ${cnt}`);
+  // 2) 额外有较高概率（80%）掉落“未解封”的卷宗（进入行囊，不直接解封）
   if (scrolls.sealedList.length && Math.random() < 0.8) {
     const s = scrolls.sealedList[randInt(0, scrolls.sealedList.length - 1)];
-    scrolls.unseal(s.id);
-    log.value.push(`获得卷宗线索，解封《${s.name}》`);
+    const itemName = `卷宗·《${s.name}》（未解封）`;
+    inv.addOre(itemName, 1);
+    log.value.push(`同时获得 ${itemName} × 1`);
   }
 }
 
