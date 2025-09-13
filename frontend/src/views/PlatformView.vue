@@ -1,6 +1,6 @@
 <template>
   <div class="panel" style="max-width:900px; margin:24px auto;">
-    <h2><span class="section-icon">🌌</span> 擎天台 · 玄门功法</h2>
+    <h2><span class="section-icon">🌌</span> 擎天殿 · 玄门功法</h2>
     <div class="grid">
       <div v-for="s in list" :key="s.id" class="item">
         <div class="info">

@@ -261,10 +261,10 @@ const disciples = computed(() => dStore.members);
 const buildings = ref([
   { id: 1, name: '蕴丹堂', icon: '⚗️', description: '炼制丹药', built: true, constructing: false, level: 1, cost: 1000 },
   { id: 2, name: '凝器堂', icon: '⚒️', description: '凝炼法器', built: true, constructing: false, level: 1, cost: 1500 },
-  { id: 3, name: '擎天台', icon: '🌌', description: '悟道问天', built: true, constructing: false, level: 1, cost: 800 },
-  { id: 4, name: '龙吟阁', icon: '📚', description: '参悟典籍', built: true, constructing: false, level: 1, cost: 2000 },
-  { id: 5, name: '牧云谷', icon: '🏞️', description: '互通有无', built: true, constructing: false, level: 1, cost: 1200 },
-  { id: 6, name: '参青殿', icon: '🏛️', description: '闭关禅定', built: true, constructing: false, level: 1, cost: 3000 },
+  { id: 3, name: '擎天殿', icon: '🌌', description: '悟道问天', built: true, constructing: false, level: 1, cost: 800 },
+  { id: 4, name: '参青殿', icon: '🏛️', description: '闭关禅定', built: true, constructing: false, level: 1, cost: 3000 },
+  { id: 5, name: '龙吟阁', icon: '📚', description: '参悟典籍', built: true, constructing: false, level: 1, cost: 2000 },
+  { id: 6, name: '牧云谷', icon: '🏞️', description: '互通有无', built: true, constructing: false, level: 1, cost: 1200 },
 ]);
 
 // 工具函数
@@ -315,7 +315,7 @@ const enterBuilding = (building) => {
   const map = new Map([
     ['蕴丹堂', '/pill'],
     ['凝器堂', '/forge'],
-    ['擎天台', '/platform'],
+    ['擎天殿', '/platform'],
     ['龙吟阁', '/pavilion'],
     ['参青殿', '/hall'],
   ]);
