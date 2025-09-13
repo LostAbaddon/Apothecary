@@ -37,6 +37,7 @@ const newCost = ref({ req: [], opt: [] });
 
 function success(){
   const s = scroll.value; if(!s) return;
+  if(!s.owned){ alert('尚未获得该卷宗，无法研习'); return; }
   if(s.sealed){ store.unseal(s.id); alert('卷宗已解封'); return; }
   // 已解封：生成新的成本供选择
   const base = s.cost || { req: [], opt: [] };
@@ -65,4 +66,3 @@ function back(){ router.push('/sect'); }
 .offer{ background:#1f233b; border:1px solid #3a3f62; border-radius:10px; padding:10px; margin-top:10px; }
 .btn-small{ padding:6px 10px; font-size:12px; }
 </style>
-

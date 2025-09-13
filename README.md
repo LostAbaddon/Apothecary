@@ -74,7 +74,7 @@ npm run clean
 │        ├─ MapView.vue      # 福地：活力/天数、战争迷雾、移动/遭遇、队伍弹窗
 │        ├─ MiningView.vue   # 洞天：扫雷式采集、随机掉落、自动结算
 │        ├─ AlchemyView.vue  # 研习：2048 式合成与经验规则（卷宗研习接入）
-│        ├─ PavilionView.vue # 龙吟阁：卷宗列表（未解封也显示种类）与研习入口
+│        ├─ PavilionView.vue # 龙吟阁：仅展示“已获得”的卷宗（未获得不显示），显示种类与研习入口
 │        ├─ PillView.vue     # 蕴丹堂：丹药配方列表与“炼制”（消耗宗门仓库）
 │        ├─ ForgeView.vue    # 凝器堂：法器秘术列表与“炼制”（消耗宗门仓库）
 │        ├─ PlatformView.vue # 擎天台：玄门功法参悟（占位按钮模拟）

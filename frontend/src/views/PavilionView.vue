@@ -1,7 +1,7 @@
 <template>
   <div class="panel" style="max-width:900px; margin:24px auto;">
     <h2><span class="section-icon">📚</span> 龙吟阁 · 卷宗</h2>
-    <p class="stat">所有卷宗均显示其种类；点击可进入“研习”。</p>
+    <p class="stat">仅展示“已获得”的卷宗；未获得的卷宗不在此显示。</p>
     <div class="grid">
       <div v-for="s in scrolls" :key="s.id" class="item">
         <div class="icon">📜</div>
@@ -24,7 +24,8 @@ import { useScrollsStore } from '../store/scrolls.js';
 
 const router = useRouter();
 const scrollsStore = useScrollsStore();
-const scrolls = computed(()=> scrollsStore.scrolls);
+// 仅展示“已获得”的卷宗，满足“回宗门后可见”的规则
+const scrolls = computed(()=> scrollsStore.scrolls.filter(s => s.owned));
 function kindAbbr(kind){
   const map = new Map([
     ['丹药配方','仙丹'],

@@ -132,6 +132,11 @@ const route = useRoute();
 const scrolls = useScrollsStore();
 const scrollId = computed(()=> route.query.scroll || null);
 const activeScroll = computed(()=> scrollId.value ? scrolls.getById(scrollId.value) : null);
+// 仅允许“已获得”的卷宗进行研习
+if(activeScroll.value && !activeScroll.value.owned){
+  alert('尚未获得该卷宗，无法研习');
+  router.push('/sect');
+}
 
 // 本地配方生成：若带卷宗，则基于卷宗的 cost/consume 推导矿池与阈值；否则使用默认配方
 const DEFAULT_POOL = ['C','D','E'];

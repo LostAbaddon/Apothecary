@@ -412,7 +412,7 @@ const openSectHistory = () => {
   align-items: center;
   line-height: 1;
   position: relative;
-  top: -4px; /* 微调，避免视觉下坠 */
+  top: -6px; /* 微调，进一步避免视觉下坠 */
 }
 
 /* 宗门概览 */
