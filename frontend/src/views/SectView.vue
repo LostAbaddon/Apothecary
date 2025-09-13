@@ -5,11 +5,11 @@
       <div class="sect-title-container">
         <div class="sect-emblem">🏛️</div>
         <div class="sect-title-text">
-          <h1>{{ sectName }}</h1>
+          <div class="sect-title-row">
+            <h1 class="sect-title-name">{{ sectName }}</h1>
+            <span class="level-badge">{{ sectLevel }}级宗门</span>
+          </div>
           <p class="sect-motto">{{ sectMotto }}</p>
-        </div>
-        <div class="sect-level">
-          <span class="level-badge">{{ sectLevel }}级宗门</span>
         </div>
       </div>
     </div>
@@ -373,6 +373,9 @@ const openSectHistory = () => {
   overflow: hidden;
 }
 
+.sect-title-row{ display:flex; align-items: baseline; gap:12px; flex-wrap: wrap; }
+.sect-title-name{ margin:0; }
+
 .sect-title-container::before {
   content: '';
   position: absolute;
@@ -388,12 +391,7 @@ const openSectHistory = () => {
   filter: drop-shadow(0 0 10px rgba(124, 131, 255, 0.3));
 }
 
-.sect-title-text h1 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  color: var(--text);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
+.sect-title-text h1 { margin: 0 0 8px 0; font-size: 32px; color: var(--text); text-shadow: 0 2px 4px rgba(0,0,0,.3); }
 
 .sect-motto {
   margin: 0;
