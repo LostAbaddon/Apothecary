@@ -139,13 +139,6 @@ if(activeScroll.value && !activeScroll.value.owned){
 }
 
 // 本地配方生成：若带卷宗，则基于卷宗的 cost/consume 推导矿池与阈值；否则使用默认配方
-const DEFAULT_POOL = ['C','D','E'];
-const DEFAULT_REQS = [
-  { type: 'C', exp: 12 },
-  { type: 'D', exp: 12 },
-  { type: 'E', exp: 12 },
-];
-function uniq(arr){ return Array.from(new Set(arr)); }
 function deriveFromScroll(s){
   if(!s) return null;
   const a = s.alchemy;
@@ -201,11 +194,25 @@ const choiceOldCost = ref({ req: [], opt: [] });
 const choiceNewCost = ref({ req: [], opt: [] });
 function cloneCost(c){ return { req: (c?.req||[]).map(x=>({id:x.id, n:x.n})), opt: (c?.opt||[]).map(x=>({id:x.id, n:x.n})) }; }
 function genNewCostFrom(base){
-  const scale = (n) => Math.max(1, Math.round(n * (0.7 + Math.random()*0.8)));
-  return {
-    req: (base.req||[]).map(r => ({ id: r.id, n: scale(r.n) })),
-    opt: (base.opt||[]).map(r => ({ id: r.id, n: scale(r.n) })),
-  };
+  // 新成本基于本局“实际损耗量/投入量”，而非随机缩放
+  // 1) 优先使用损耗量（consumedCounts：同色异矿合并被吞没的材料总数）
+  let req = Object.entries(consumedCounts)
+    .map(([id, n]) => ({ id, n: Number(n)|0 }))
+    .filter(r => r.n > 0);
+  // 2) 若损耗量为 0（极少数情况），回退到“投入总量”（棋盘当前 + 损耗）
+  if(req.length === 0){
+    const totalUsed = calculateTotalUsedItems();
+    req = Object.entries(totalUsed)
+      .map(([id, n]) => ({ id, n: Number(n)|0 }))
+      .filter(r => r.n > 0);
+  }
+  // 3) 若仍为空（异常情况），回退到原成本
+  if(req.length === 0){
+    req = (base.req || []).map(r => ({ id: r.id, n: Number(r.n)|0 || 1 }));
+  }
+  // 排序使显示更直观
+  req.sort((a,b)=> (b.n|0) - (a.n|0));
+  return { req, opt: [] };
 }
 function openChoiceForScroll(s){
   // 对于功法/真经，将 consume 视为 req；对于丹/法器使用 cost
