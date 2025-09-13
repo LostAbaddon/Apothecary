@@ -6,8 +6,11 @@
       <div v-for="s in scrolls" :key="s.id" class="item">
         <div class="icon">📜</div>
         <div class="info">
-          <div class="name">{{ s.name }}</div>
-          <div class="meta">{{ s.sealed ? '未解封' : s.kind }}</div>
+          <div class="name">
+            <template v-if="!s.sealed">{{ kindAbbr(s.kind) }} · {{ s.name }}</template>
+            <template v-else>{{ s.name }}</template>
+          </div>
+          <div class="meta">{{ s.sealed ? '未解封' : '' }}</div>
         </div>
         <div class="actions">
           <button class="btn btn-small" @click="study(s)">研习</button>
@@ -25,6 +28,15 @@ import { useScrollsStore } from '../store/scrolls.js';
 const router = useRouter();
 const scrollsStore = useScrollsStore();
 const scrolls = computed(()=> scrollsStore.scrolls);
+function kindAbbr(kind){
+  const map = new Map([
+    ['丹药配方','仙丹'],
+    ['法器秘术','法器'],
+    ['玄门功法','功法'],
+    ['符箓天书','天书'],
+  ]);
+  return map.get(kind) || String(kind || '');
+}
 
 function study(s){ router.push({ path: '/alchemy', query: { scroll: s.id } }); }
 </script>

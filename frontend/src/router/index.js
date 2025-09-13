@@ -3,7 +3,7 @@ import { createPinia } from 'pinia';
 import { useHeroesStore } from '../store/heroes.js';
 import MiningView from '../views/MiningView.vue';
 import AlchemyView from '../views/AlchemyView.vue';
-import InventoryView from '../views/InventoryView.vue';
+import TeamView from '../views/TeamView.vue';
 import MapView from '../views/MapView.vue';
 import SectView from '../views/SectView.vue';
 import BattleView from '../views/BattleView.vue';
@@ -18,7 +18,7 @@ const routes = [
   { path: '/', redirect: '/sect' },
   { path: '/mining', component: MiningView },
   { path: '/alchemy', component: AlchemyView },
-  { path: '/inventory', component: InventoryView },
+  { path: '/team', component: TeamView },
   { path: '/map', component: MapView },
   { path: '/sect', component: SectView },
   { path: '/battle', component: BattleView },

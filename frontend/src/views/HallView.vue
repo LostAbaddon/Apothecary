@@ -1,6 +1,6 @@
 <template>
   <div class="panel" style="max-width:900px; margin:24px auto;">
-    <h2><span class="section-icon">🏛️</span> 参青殿 · 无字真经</h2>
+    <h2><span class="section-icon">🏛️</span> 参青殿 · 符箓天书</h2>
     <div class="grid">
       <div v-for="s in list" :key="s.id" class="item">
         <div class="info">
@@ -100,4 +100,3 @@ function fail(){
 .row{ background:#23273d; border:1px solid #303657; padding:8px; border-radius:6px; cursor:pointer; }
 .row:hover{ border-color: var(--accent); }
 </style>
-

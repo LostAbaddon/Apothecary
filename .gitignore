@@ -68,3 +68,5 @@ temp/
 # ---- AI assistants / Local configs ----
 .codebuddy/
 .claude/
+plan.md
+note.md

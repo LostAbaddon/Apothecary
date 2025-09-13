@@ -132,9 +132,42 @@ const route = useRoute();
 const scrolls = useScrollsStore();
 const scrollId = computed(()=> route.query.scroll || null);
 const activeScroll = computed(()=> scrollId.value ? scrolls.getById(scrollId.value) : null);
-const recipe = computed(()=> inv.selectedRecipe);
-// 配方显示名称（去掉括号内容）
-  const recipeDisplayName = computed(() => {
+
+// 本地配方生成：若带卷宗，则基于卷宗的 cost/consume 推导矿池与阈值；否则使用默认配方
+const DEFAULT_POOL = ['C','D','E'];
+const DEFAULT_REQS = [
+  { type: 'C', exp: 12 },
+  { type: 'D', exp: 12 },
+  { type: 'E', exp: 12 },
+];
+function uniq(arr){ return Array.from(new Set(arr)); }
+function deriveFromScroll(s){
+  if(!s) return null;
+  let pool = [];
+  let items = [];
+  if(s.kind === '丹药配方' || s.kind === '法器秘术'){
+    const req = s.cost?.req || [];
+    const opt = s.cost?.opt || [];
+    items = [...req, ...opt];
+  } else {
+    items = s.consume || [];
+  }
+  if(items.length){ pool = uniq(items.map(x=>x.id)); }
+  // 阈值：按数量从高到低取前三，映射为 8+数量，限制 24 上限
+  const reqs = (items.length ? items.slice().sort((a,b)=> (b.n|0)-(a.n|0)) : [])
+    .slice(0, 3)
+    .map(r => ({ type: r.id, exp: Math.min(24, 8 + (r.n|0)) }));
+  return {
+    name: s.name,
+    pool: (pool.length ? pool : DEFAULT_POOL),
+    reqs: (reqs.length ? reqs : DEFAULT_REQS),
+  };
+}
+const recipe = computed(()=> deriveFromScroll(activeScroll.value) || { name:'彩虹配方', pool: DEFAULT_POOL, reqs: DEFAULT_REQS });
+// 配方显示名称（去掉括号内容）；若带卷宗则直接使用卷宗名
+const recipeDisplayName = computed(() => {
+  const s = activeScroll.value;
+  if(s) return s.name;
   const name = recipe.value?.name || '';
   return name.replace(/\s*\(.*\)\s*/, '');
 });

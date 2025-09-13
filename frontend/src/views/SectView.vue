@@ -50,16 +50,6 @@
           </div>
           <div class="warehouse-content">
             <p class="section-description">存放从洞天福地带回的珍贵材料</p>
-            <div class="warehouse-stats">
-              <span class="warehouse-stat">
-                <span class="stat-icon">📊</span>
-                总计：{{ sectTotal }} 件物品
-              </span>
-              <span class="warehouse-stat">
-                <span class="stat-icon">💎</span>
-                价值：{{ warehouseValue }} 灵石
-              </span>
-            </div>
             <div class="badges warehouse-badges">
               <span
                 class="badge warehouse-badge"
@@ -84,7 +74,8 @@
           <div class="section-header">
             <h2><span class="section-icon">👥</span>弟子管理</h2>
             <div class="section-actions">
-              <button class="btn btn-small" @click="recruitDisciple">招收弟子</button>
+              <span class="stat" style="margin-right:8px;">{{ totalDisciples }}/50</span>
+              <button class="btn btn-small" @click="recruitDisciple" :disabled="totalDisciples >= 50">招收弟子</button>
             </div>
           </div>
           <div class="disciples-content">
@@ -101,6 +92,8 @@
                   <button
                     v-if="disciple.status === '驻守'"
                     class="btn btn-tiny"
+                    :disabled="heroes.count >= 5"
+                    :title="heroes.count >= 5 ? '队伍已满（最多5人）' : ''"
                     @click="assignTask(disciple)"
                   >派遣</button>
                   <button
@@ -288,7 +281,7 @@ const getStatusText = (status) => {
 };
 
 // 事件处理函数
-const recruitDisciple = () => { dStore.recruitOne(); };
+const recruitDisciple = () => { if (totalDisciples.value < 50) dStore.recruitOne(); };
 
 import { useHeroesStore } from '../store/heroes.js';
 import { useGameStore } from '../store/game.js';
@@ -298,6 +291,7 @@ const game = useGameStore();
 const assignTask = (disciple) => {
   if (!disciple) return;
   if (disciple.status === '驻守') {
+    if (heroes.count >= 5) { alert('队伍已满（最多5人）'); return; }
     disciple.status = '寻秘';
     heroes.addIfNotExists(disciple);
   } else if (disciple.status === '寻秘') {
@@ -573,21 +567,6 @@ const openSectHistory = () => {
   padding: 20px;
 }
 
-.warehouse-stats {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-
-.warehouse-stat {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 14px;
-}
-
 .stat-icon {
   font-size: 16px;
 }
@@ -637,19 +616,19 @@ const openSectHistory = () => {
 /* 弟子网格 */
 .disciples-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .disciple-card {
   background: #23273d;
   border: 1px solid #3a3f62;
   border-radius: 10px;
-  padding: 15px;
+  padding: 10px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   transition: all 0.2s ease;
 }
 
@@ -659,9 +638,9 @@ const openSectHistory = () => {
 }
 
 .disciple-avatar {
-  font-size: 24px;
-  width: 40px;
-  height: 40px;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -889,11 +868,29 @@ const openSectHistory = () => {
   font-size: 14px;
 }
 
+/* 弟子面板：限定最大高度，启用内滚动 */
+.disciples-content {
+  max-height: 460px;
+  overflow-y: auto;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .sect-content {
     flex-direction: column;
   }
+  /* 扁平化左右两列，使子区块可在同一层级重排 */
+  .sect-left-column,
+  .sect-right-column {
+    display: contents;
+  }
+  /* 一栏模式下的显示顺序：建设 → 弟子 → 仓库 → 事务 */
+  .buildings-section { order: 1; }
+  .disciples-section { order: 2; }
+  .warehouse-section { order: 3; }
+  .affairs-section { order: 4; }
+  /* 确保区块占满宽度 */
+  .sect-section { width: 100%; }
   
   .sect-overview {
     grid-template-columns: repeat(2, 1fr);

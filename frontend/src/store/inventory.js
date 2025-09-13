@@ -15,18 +15,8 @@ export const useInventoryStore = defineStore('inventory', {
     inventory: {},
     // 宗门仓库：集中存放从洞天获得的材料
     sectInventory: { ...INITIAL_SECT_INVENTORY },
-    // Simple recipe presets
-    recipes: [
-      { id: 'styptic', name: '金创药', reqs: [{ type: 'C', exp: 10 }, { type: 'A', exp: 5 }], pool: ['C', 'A'] },
-      { id: 'rainbow', name: '彩虹配方', reqs: [{ type: 'C', exp: 12 }, { type: 'D', exp: 12 }, { type: 'E', exp: 12 }], pool: ['C', 'D', 'E'] }
-    ],
-    selectedRecipeId: 'styptic',
   }),
-  getters: {
-    selectedRecipe(state) {
-      return state.recipes.find(r => r.id === state.selectedRecipeId) || state.recipes[0];
-    },
-  },
+  getters: {},
   actions: {
     // 根据矿种ID入宗门仓库聚合（宗门仓库对矿石一律用ID作键）
     addSectOreById(id, count = 1) {
@@ -78,6 +68,5 @@ export const useInventoryStore = defineStore('inventory', {
         }
       }
     },
-    setRecipe(id) { this.selectedRecipeId = id; },
   }
 });

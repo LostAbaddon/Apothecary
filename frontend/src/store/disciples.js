@@ -42,12 +42,14 @@ export const useDisciplesStore = defineStore('disciples', {
   state: () => ({
     members: initialMembers(),
     nextId: 11,
+    max: 50,
   }),
   getters: {
     count: (s) => s.members.length,
   },
   actions: {
     recruitOne(){
+      if (this.members.length >= (this.max|0)) return null;
       const used = new Set(this.members.map(m => m.name));
       const name = genName(used);
       const seven = Math.floor(Math.random()*7);
@@ -65,8 +67,8 @@ export const useDisciplesStore = defineStore('disciples', {
         internals: [],
         status: '驻守',
       });
+      return this.members[this.members.length - 1];
     },
     removeById(id){ this.members = this.members.filter(m => m.id !== id); },
   }
 });
-

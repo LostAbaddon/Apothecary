@@ -10,6 +10,7 @@ export const useHeroesStore = defineStore('heroes', {
   state: () => ({
     members: [],
     nextId: 1,
+    max: 5,
   }),
   getters: {
     count: (s) => s.members.length,
@@ -49,6 +50,7 @@ export const useHeroesStore = defineStore('heroes', {
     clear(){ this.members = []; this.nextId = 1; },
     addIfNotExists(member){
       if(!member || member.id == null) return;
+      if(this.members.length >= (this.max|0)) return; // 达到上限
       if(!this.members.some(m => m.id === member.id)){
         this.members.push(member);
       }

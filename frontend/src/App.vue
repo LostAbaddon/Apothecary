@@ -9,7 +9,7 @@
         :aria-disabled="inDungeon || !canEnterMap ? 'true' : 'false'"
         :title="!canEnterMap ? '队伍人数为 0，暂不可进入' : ''"
       >福地寻秘</RouterLink>
-      <RouterLink to="/inventory" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">行囊</RouterLink>
+      <RouterLink to="/team" :tabindex="inDungeon ? -1 : 0" :aria-disabled="inDungeon ? 'true' : 'false'">求道团队</RouterLink>
     </nav>
     <RouterView v-slot="{ Component }">
       <KeepAlive include="MapView">
