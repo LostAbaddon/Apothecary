@@ -51,7 +51,7 @@ function win(){
   // 2) 额外有较高概率（80%）掉落“未解封”的卷宗（进入行囊，不直接解封）
   if (scrolls.sealedList.length && Math.random() < 0.8) {
     const s = scrolls.sealedList[randInt(0, scrolls.sealedList.length - 1)];
-    const itemName = `卷宗·《${s.name}》（未解封）`;
+    const itemName = `卷宗·《${s.name}》`;
     inv.addOre(itemName, 1);
     log.value.push(`同时获得 ${itemName} × 1`);
   }

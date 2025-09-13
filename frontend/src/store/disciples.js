@@ -35,15 +35,15 @@ function initialMembers(){
   const list = [];
   for(let i=0;i<10;i++){
     const name = genName(used); used.add(name);
-    // 七曜：金木水火土日月
+    // 七曜：金木水火土风雷
     const seven = {
       metal: Math.floor(Math.random()*11),
       wood: Math.floor(Math.random()*11),
       water: Math.floor(Math.random()*11),
       fire: Math.floor(Math.random()*11),
       earth: Math.floor(Math.random()*11),
-      sun: Math.floor(Math.random()*11),
-      moon: Math.floor(Math.random()*11),
+      wind: Math.floor(Math.random()*11),
+      thunder: Math.floor(Math.random()*11),
     };
     list.push({
       id: i+1,
@@ -83,8 +83,8 @@ export const useDisciplesStore = defineStore('disciples', {
         water: Math.floor(Math.random()*11),
         fire: Math.floor(Math.random()*11),
         earth: Math.floor(Math.random()*11),
-        sun: Math.floor(Math.random()*11),
-        moon: Math.floor(Math.random()*11),
+        wind: Math.floor(Math.random()*11),
+        thunder: Math.floor(Math.random()*11),
       };
       this.members.push({
         id: this.nextId++,

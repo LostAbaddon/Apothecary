@@ -53,7 +53,7 @@ const candidates = computed(()=> heroes.members.filter(d => d.status === '驻守
 
 function sevenTotal(d){
   const s = d?.seven || {}; const v = (x)=> Number(x||0);
-  return v(s.metal)+v(s.wood)+v(s.water)+v(s.fire)+v(s.earth)+v(s.sun)+v(s.moon);
+  return v(s.metal)+v(s.wood)+v(s.water)+v(s.fire)+v(s.earth)+v(s.wind)+v(s.thunder);
 }
 
 function hasEnoughCost(s){ return (s.consume||[]).every(c => (inv.sectInventory[c.id]||0) >= c.n); }

@@ -69,12 +69,12 @@ export const useInventoryStore = defineStore('inventory', {
           this.inventory[name] = 0;
           continue;
         }
-        // 卷宗物品命名约定：卷宗·《{name}》（未解封）
-        const m = /^卷宗·《(.+?)》\（未解封\）$/.exec(name);
+        // 卷宗物品命名约定：卷宗·《{name}》 （行囊中出现即未解封）
+        const m = /^卷宗·《(.+?)》$/.exec(name);
         if (m && m[1]) {
           const title = m[1];
           scrolls.setOwnedByName(title, true);
-          this.inventory[name] = Math.max(0, n - 1); // 收录一份
+          this.inventory[name] = 0; // 全部收录后移除
         }
       }
     },

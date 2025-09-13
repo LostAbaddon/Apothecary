@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-// 七曜属性：金木水火土日月 七项独立值
+// 七曜属性：金木水火土风雷 七项独立值
 const NAME_SURNAMES = [
   ...'赵钱孙李周吴郑王冯陈褚卫蒋沈韩杨朱秦尤许何吕施张孔曹严华金魏陶姜戚谢邹喻柏水窦章苏潘葛范彭郎鲁韦昌马苗凤花方俞任袁柳唐罗薛伍余元卜顾孟平黄和穆萧尹姚邵湛汪祁毛狄米贝明臧计伏成戴谈宋茅庞熊纪舒屈项祝董梁杜阮蓝闵席季麻强贾路娄危江童颜郭梅盛林刁钟徐丘骆高夏蔡田樊胡凌霍虞万支柯昝管卢莫经房裘缪干解应宗丁宣贲邓郁单杭洪包诸左石崔吉龚程嵇邢滑裴陆荣翁荀羊於惠甄曲家封芮羿储靳汲邴糜松井段富巫乌焦巴弓牧隗山谷车侯宓蓬全郗班仰秋仲伊宫宁仇栾暴甘钭厉戎祖武符刘姜'.split(''),
   '欧阳','司马','上官','东方','长孙','诸葛','尉迟','皇甫','夏侯','宇文','慕容','司徒','司空','公孙','公良','令狐','钟离','闾丘','子车','端木','申屠','公冶','太叔','闻人','赫连','澹台','宗政','轩辕','独孤'
@@ -38,15 +38,15 @@ export const useHeroesStore = defineStore('heroes', {
     recruitOne(){
       const existing = new Set(this.members.map(m => m.name));
       const name = this.generateUniqueName(existing);
-      // 初始七曜：金木水火土日月，取 0..10 的基础值
+      // 初始七曜：金木水火土风雷，取 0..10 的基础值
       const seven = {
         metal: Math.floor(Math.random()*11),
         wood: Math.floor(Math.random()*11),
         water: Math.floor(Math.random()*11),
         fire: Math.floor(Math.random()*11),
         earth: Math.floor(Math.random()*11),
-        sun: Math.floor(Math.random()*11),
-        moon: Math.floor(Math.random()*11),
+        wind: Math.floor(Math.random()*11),
+        thunder: Math.floor(Math.random()*11),
       };
       const level = 1; // 初始境界
       const member = {

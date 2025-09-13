@@ -16,8 +16,8 @@
                 <span class="attr">水：{{ m.seven?.water ?? 0 }}</span>
                 <span class="attr">火：{{ m.seven?.fire ?? 0 }}</span>
                 <span class="attr">土：{{ m.seven?.earth ?? 0 }}</span>
-                <span class="attr">日：{{ m.seven?.sun ?? 0 }}</span>
-                <span class="attr">月：{{ m.seven?.moon ?? 0 }}</span>
+                <span class="attr">风：{{ m.seven?.wind ?? 0 }}</span>
+                <span class="attr">雷：{{ m.seven?.thunder ?? 0 }}</span>
                 <span class="attr">体力：{{ m.hp }}</span>
                 <span class="attr">真元：{{ m.mp }}</span>
                 <span class="attr">攻击：{{ m.atk }}</span>
