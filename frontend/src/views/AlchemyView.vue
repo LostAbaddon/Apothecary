@@ -238,7 +238,7 @@ function pickChoice(which){
     }
   }
   showChoiceModal.value = false;
-  router.push('/map');
+  router.push('/pavilion');
 }
 function computeLayout(){
   const vw = Math.max(320, window.innerWidth || 0);
@@ -553,7 +553,7 @@ function endGame(success, message) {
       if(s.sealed){
         scrolls.unseal(s.id);
         alert('卷宗已解封');
-        setTimeout(()=> router.push('/map'), 800);
+        setTimeout(()=> router.push('/pavilion'), 800);
       } else {
         openChoiceForScroll(s);
       }
@@ -562,7 +562,7 @@ function endGame(success, message) {
       const recipeName = recipeDisplayName.value;
       inv.addSectOre(recipeName, 1);
       alert(`恭喜！${message}`);
-      setTimeout(() => { router.push('/map'); }, 1500);
+      setTimeout(() => { router.push('/pavilion'); }, 1500);
     }
   } else {
     // 失败：以弹窗方式展示结果与各矿消耗明细，由玩家确认后返回
