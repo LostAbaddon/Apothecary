@@ -1,15 +1,12 @@
 <template>
   <div class="panel" style="max-width:900px; margin:24px auto;">
     <h2><span class="section-icon">📚</span> 龙吟阁 · 卷宗</h2>
-    <p class="stat">未解封的卷宗仅显示卷轴，不显示种类；可在此进行“研习”。</p>
+    <p class="stat">所有卷宗均显示其种类；点击可进入“研习”。</p>
     <div class="grid">
       <div v-for="s in scrolls" :key="s.id" class="item">
         <div class="icon">📜</div>
         <div class="info">
-          <div class="name">
-            <template v-if="!s.sealed">{{ kindAbbr(s.kind) }} · {{ s.name }}</template>
-            <template v-else>{{ s.name }}</template>
-          </div>
+          <div class="name">{{ kindAbbr(s.kind) }} · {{ s.name }}</div>
           <div class="meta">{{ s.sealed ? '未解封' : '' }}</div>
         </div>
         <div class="actions">
