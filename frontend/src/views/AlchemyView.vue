@@ -148,6 +148,14 @@ const DEFAULT_REQS = [
 function uniq(arr){ return Array.from(new Set(arr)); }
 function deriveFromScroll(s){
   if(!s) return null;
+  // 优先使用卷宗自身定义的研习参数（数据驱动）
+  const a = s.alchemy;
+  if (a && Array.isArray(a.pool) && Array.isArray(a.reqs) && a.reqs.length) {
+    const pool = (a.pool.length ? a.pool.slice() : DEFAULT_POOL);
+    const reqs = a.reqs.map(r => ({ type: r.type, exp: Number(r.exp) || 0 }));
+    return { name: s.name, pool, reqs: (reqs.length ? reqs : DEFAULT_REQS) };
+  }
+  // 兼容：若未提供 alchemy，则从卷宗成本/消耗进行一次性推导
   let pool = [];
   let items = [];
   if(s.kind === '丹药配方' || s.kind === '法器秘术'){
@@ -158,15 +166,10 @@ function deriveFromScroll(s){
     items = s.consume || [];
   }
   if(items.length){ pool = uniq(items.map(x=>x.id)); }
-  // 阈值：按数量从高到低取前三，映射为 8+数量，限制 24 上限
   const reqs = (items.length ? items.slice().sort((a,b)=> (b.n|0)-(a.n|0)) : [])
     .slice(0, 3)
     .map(r => ({ type: r.id, exp: Math.min(24, 8 + (r.n|0)) }));
-  return {
-    name: s.name,
-    pool: (pool.length ? pool : DEFAULT_POOL),
-    reqs: (reqs.length ? reqs : DEFAULT_REQS),
-  };
+  return { name: s.name, pool: (pool.length ? pool : DEFAULT_POOL), reqs: (reqs.length ? reqs : DEFAULT_REQS) };
 }
 const recipe = computed(()=> deriveFromScroll(activeScroll.value) || { name:'彩虹配方', pool: DEFAULT_POOL, reqs: DEFAULT_REQS });
 // 配方显示名称（去掉括号内容）；若带卷宗则直接使用卷宗名
